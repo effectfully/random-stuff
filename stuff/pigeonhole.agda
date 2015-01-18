@@ -1,3 +1,5 @@
+-- Based on https://github.com/gallais/potpourri/blob/master/agda/poc/PigeonHole.agda
+
 open import Function
 open import Data.Nat
 open import Data.Sum
