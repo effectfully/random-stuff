@@ -30,7 +30,7 @@ N-ary-UVec-impl-dep : ∀ {n} {αs : Vec Level n} {β γ}
 N-ary-UVec-impl-dep {αs = []}      Y      Z = (y : Y) -> Z y
 N-ary-UVec-impl-dep {αs = α ∷ αs} (X , F) Z = {x : X} -> N-ary-UVec-impl-dep (F x) Z
 
--- The n-ary composition function
+-- N-ary composition function
 
 compT : ∀ {n} {αs : Vec Level n} {β γ}
       -> (Xs : UVec αs β)
