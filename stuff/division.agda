@@ -12,11 +12,6 @@ open import Induction.WellFounded
 open import Induction.Nat
 open import Data.Nat.Properties
 
-last : ∀ {α} {A : Set α} -> A -> List A -> A
-last z  []      = z
-last _ (x ∷ []) = x
-last z (x ∷ xs) = last z xs
-
 calls : ∀ {a b ℓ} {A : Set a} {_<_ : Rel A ℓ} {guarded : A -> Set b}
       -> (f : A -> A)
       -> Well-founded _<_
