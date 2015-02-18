@@ -1,3 +1,5 @@
+-- related to http://stackoverflow.com/questions/28581814/how-to-define-division-operator-in-agda/
+
 open import Function
 open import Relation.Nullary
 open import Relation.Nullary.Decidable hiding (map)
