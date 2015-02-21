@@ -47,7 +47,7 @@ _div⁺_ : ∀ {m} -> ℕ -> Is (suc m) -> ℕ
 n div⁺ im = length (iter-sub n im)
 
 _div_ : ℕ -> (m : ℕ) {_ : False (m ≟ 0)} -> ℕ
-_div_ n 0 {()}
+n div  0      = λ{()}
 n div (suc m) = n div⁺ (! (suc m))
 
 test-1 : iter-sub 10 (! 3) ≡ 10 ∷ 7 ∷ 4 ∷ []
