@@ -119,8 +119,3 @@ module comp8 where
     -- ... because this would result in an invalid use of Setω ...
     -- error : ∀ α -> (A : Set α) -> ℕ -> A -> ℕ
     -- error = comp 4 length explicit-replicate'
-
-    idₑ : ∀ α -> (A : Set α) -> A -> A
-    idₑ _ _ x = x
-
-    error = idₑ _ _ idₑ
