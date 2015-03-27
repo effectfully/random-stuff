@@ -1,3 +1,5 @@
+-- related to http://stackoverflow.com/questions/29260874/problems-on-data-type-indices-that-uses-list-concatenation
+
 open import Data.List
 open import Data.Fin hiding (_+_)
 open import Data.Nat renaming (ℕ to Nat)
