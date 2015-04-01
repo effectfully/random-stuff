@@ -68,6 +68,6 @@ lemma (o-fail1   pr1)                      (o-fail2   pr1' pr2') = refl
 lemma (o-fail2 {x = x} {y} pr1 pr2)         pr3                  with inspect (x ++ y)
 ... | z with-≡ r rewrite r with z | pr3 
 ... | ._ | o-success {x = x''} pr1' pr2'
-  rewrite (un-just (lemma pr1 pr1')) | cut x'' r                 = case lemma pr2 pr2' of λ()
+  rewrite un-just (lemma pr1 pr1') | cut x'' r                   = case lemma pr2 pr2' of λ()
 ... | ._ | o-fail1             pr1'                              = refl
 ... | ._ | o-fail2             pr1' pr2'                         = refl
