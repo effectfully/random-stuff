@@ -47,27 +47,26 @@ open Deprecated-inspect
 un-just : ∀ {α} {A : Set α} {x y : A} -> _==_ {A = Maybe A} (just x) (just y) -> x == y
 un-just refl = refl
 
-mutual
-  lemma : ∀ {n} {G : Con n} {f x p p'} -> G :: f , x => p -> G :: f , x => p' -> p == p'
-  lemma  empty                           empty                = refl
-  lemma  sym-success                     sym-success          = refl
-  lemma  sym-success                    (sym-failure p)       = ⊥-elim (p refl)
-  lemma (sym-failure p)                  sym-success          = ⊥-elim (p refl)
-  lemma (sym-failure _)                 (sym-failure _)       = refl
-  lemma (var pr1)                       (var pr2)             = lemma pr1 pr2
-  lemma (o-success {x = x} {x'} {y} pr1 pr2)  pr3             with inspect (x ++ x' ++ y)
-  ... | z with-≡ r rewrite r with z | pr3
-  ... | ._ | o-success {x = x''} pr1' pr2'
-    rewrite un-just (lemma pr1 pr1') | cut x'' r | un-just (lemma pr2 pr2') = refl
-  ... | ._ | o-fail1             pr1'                         = case lemma pr1 pr1' of λ()
-  ... | ._ | o-fail2   {x = x''} pr1' pr2'
-    rewrite un-just (lemma pr1 pr1') | cut x'' r              = case lemma pr2 pr2' of λ()
-  lemma (o-fail1   pr1)                 (o-success pr1' pr2') = case lemma pr1 pr1' of λ()
-  lemma (o-fail1   pr1)                 (o-fail1   pr1')      = refl
-  lemma (o-fail1   pr1)                 (o-fail2   pr1' pr2') = refl
-  lemma (o-fail2 {x = x} {y} pr1 pr2)    pr3                  with inspect (x ++ y)
-  ... | z with-≡ r rewrite r with z | pr3 
-  ... | ._ | o-success {x = x''} pr1' pr2'
-    rewrite (un-just (lemma pr1 pr1')) | cut x'' r            = case lemma pr2 pr2' of λ()
-  ... | ._ | o-fail1             pr1'                         = refl
-  ... | ._ | o-fail2             pr1' pr2'                    = refl
+lemma : ∀ {n} {G : Con n} {f x p p'} -> G :: f , x => p -> G :: f , x => p' -> p == p'
+lemma  empty                                empty                = refl
+lemma  sym-success                          sym-success          = refl
+lemma  sym-success                         (sym-failure p)       = ⊥-elim (p refl)
+lemma (sym-failure p)                       sym-success          = ⊥-elim (p refl)
+lemma (sym-failure _)                      (sym-failure _)       = refl
+lemma (var pr1)                            (var pr2)             = lemma pr1 pr2
+lemma (o-success {x = x} {x'} {y} pr1 pr2)  pr3                  with inspect (x ++ x' ++ y)
+... | z with-≡ r rewrite r with z | pr3
+... | ._ | o-success {x = x''} pr1' pr2'
+  rewrite un-just (lemma pr1 pr1') | cut x'' r | un-just (lemma pr2 pr2') = refl
+... | ._ | o-fail1             pr1'                              = case lemma pr1 pr1' of λ()
+... | ._ | o-fail2   {x = x''} pr1' pr2'
+  rewrite un-just (lemma pr1 pr1') | cut x'' r                   = case lemma pr2 pr2' of λ()
+lemma (o-fail1   pr1)                      (o-success pr1' pr2') = case lemma pr1 pr1' of λ()
+lemma (o-fail1   pr1)                      (o-fail1   pr1')      = refl
+lemma (o-fail1   pr1)                      (o-fail2   pr1' pr2') = refl
+lemma (o-fail2 {x = x} {y} pr1 pr2)         pr3                  with inspect (x ++ y)
+... | z with-≡ r rewrite r with z | pr3 
+... | ._ | o-success {x = x''} pr1' pr2'
+  rewrite (un-just (lemma pr1 pr1')) | cut x'' r                 = case lemma pr2 pr2' of λ()
+... | ._ | o-fail1             pr1'                              = refl
+... | ._ | o-fail2             pr1' pr2'                         = refl
