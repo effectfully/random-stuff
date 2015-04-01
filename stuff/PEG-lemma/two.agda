@@ -8,7 +8,7 @@ open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality renaming (_≡_ to _==_ ; sym to symm) hiding (inspect)
 open import Data.Maybe as Maybe
 open import Function
-
+ 
 postulate A : Set
 
 data Foo : Nat -> Set where
@@ -57,7 +57,8 @@ lemma (var pr1)                            (var pr2)             = lemma pr1 pr2
 lemma (o-success {x = x} {x'} {y} pr1 pr2)  pr3                  with inspect (x ++ x' ++ y)
 ... | z with-≡ r rewrite r with z | pr3
 ... | ._ | o-success {x = x''} pr1' pr2'
-  rewrite un-just (lemma pr1 pr1') | cut x'' r | un-just (lemma pr2 pr2') = refl
+  rewrite un-just (lemma pr1 pr1') | cut x'' r
+        | un-just (lemma pr2 pr2')                               = refl
 ... | ._ | o-fail1             pr1'                              = case lemma pr1 pr1' of λ()
 ... | ._ | o-fail2   {x = x''} pr1' pr2'
   rewrite un-just (lemma pr1 pr1') | cut x'' r                   = case lemma pr2 pr2' of λ()
