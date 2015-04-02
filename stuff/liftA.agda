@@ -22,8 +22,8 @@ record Applicative {α} (F : Set α -> Set α) : Set (suc α) where
     _<*>_ : ∀ {A B} -> F (A -> B) -> F A -> F B
 
   instance
-    Applicative->Functor : Functor F
-    Applicative->Functor = record { _<$>_ = _<*>_ ∘ pure }
+    Applicative<:Functor : Functor F
+    Applicative<:Functor = record { _<$>_ = _<*>_ ∘ pure }
 open Applicative {{...}}
 
 record Monad {α} (M : Set α -> Set α) : Set (suc α) where
@@ -34,8 +34,8 @@ record Monad {α} (M : Set α -> Set α) : Set (suc α) where
     _>>=_  : ∀ {A B} -> M A -> (A -> M B) -> M B
 
   instance
-    Monad->Applicative : Applicative M
-    Monad->Applicative = record { pure = return ; _<*>_ = λ mf mx -> mf >>= λ f -> mx >>= return ∘ f }
+    Monad<:Applicative : Applicative M
+    Monad<:Applicative = record { pure = return ; _<*>_ = λ mf mx -> mf >>= λ f -> mx >>= return ∘ f }
 open Monad {{...}}
 
 --------------------
