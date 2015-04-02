@@ -48,17 +48,13 @@ instance
   Id : ∀ {α} {A : Set α} -> A ~> A
   Id = rec id
 
-  Fmap : ∀ {α γ} {A B : Set α} {C : Set γ} {F : Set α -> Set α}
-       -> {{_ : F B ~> C}} {{_ : Applicative F}} -> (A -> B) ~> (F A -> C)
-  Fmap {{rec r}} = rec (r % ∘ _<$>_)
-
   Ap : ∀ {α γ} {A B : Set α} {C : Set γ} {F : Set α -> Set α}
      -> {{_ : F B ~> C}} {{_ : Applicative F}} -> F (A -> B) ~> (F A -> C)
   Ap {{rec r}} = rec (r % ∘ _<*>_)
 
 liftA : ∀ {α γ} {A B : Set α} {C : Set γ} {F : Set α -> Set α}
       -> {{_ : F B ~> C}} {{_ : Applicative F}} -> (A -> B) -> F A -> C
-liftA = _~>_.apply Fmap
+liftA {{rec r}} = _~>_.apply (rec (r % ∘ _<$>_))
 
 --------------------
 
