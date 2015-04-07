@@ -56,7 +56,7 @@ liftA : ∀ {α γ} {A B : Set α} {C : Set γ} {F : Set α -> Set α}
       -> {{_ : F B ~> C}} {{_ : Applicative F}} -> (A -> B) -> F A -> C
 liftA {{rec r}} = _~>_.apply (rec (r % ∘ _<$>_))
 
---------------------
+-------------------
 
 open import Data.Maybe
 open import Data.List
@@ -82,3 +82,7 @@ test-3 = liftA _+_
 
 test-4 : List (ℕ × ℕ)
 test-4 = liftA _,_ · (1 ∷ 2 ∷ 3 ∷ []) · (4 ∷ 5 ∷ [])
+
+-- Note that _·_ is just an infixl synonym of _$_
+yellow : List (ℕ × ℕ)
+yellow = liftA _,_   (1 ∷ 2 ∷ 3 ∷ [])   (4 ∷ 5 ∷ [])
