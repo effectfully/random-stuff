@@ -83,6 +83,6 @@ test-3 = liftA _+_
 test-4 : List (ℕ × ℕ)
 test-4 = liftA _,_ · (1 ∷ 2 ∷ 3 ∷ []) · (4 ∷ 5 ∷ [])
 
--- Note that _·_ is just an infixl synonym of _$_
+-- Note that _·_ is just an infixl synonym for _$_
 yellow : List (ℕ × ℕ)
 yellow = liftA _,_   (1 ∷ 2 ∷ 3 ∷ [])   (4 ∷ 5 ∷ [])
