@@ -37,6 +37,6 @@ isubst : ∀ {ι α β} {I : Set ι} {i j : I}
 isubst A C refl refl = id
 
 icong : ∀ {ι α β} {I : Set ι} {i j : I}
-      -> (A : I -> Set α) {B : {k : I} -> A k -> Set β} {x : A i} {y : A j}
-      -> (f : {k : I} -> (x : A k) -> B x) -> i ≅ j -> x ≅ y -> f x ≅ f y
+      -> (A : I -> Set α) {B : ∀ {k} -> A k -> Set β} {x : A i} {y : A j}
+      -> (f : ∀ {k} -> (x : A k) -> B x) -> i ≅ j -> x ≅ y -> f x ≅ f y
 icong A f refl refl = refl
