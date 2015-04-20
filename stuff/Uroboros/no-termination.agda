@@ -108,7 +108,7 @@ Term : Type ε -> Set
 Term σ = ε ⊢ σ
 
 -- Not so terminating. OK, what's going on here?
--- Is it just the Agda's inefficient evaluation strategy?
+-- Is it just Agda's inefficient evaluation strategy?
 -- There are no termination issues without the `coe' cases,
 -- but Agda consumes more than 1 GB RAM for checking `loop'.
 loop : Term ((type Π type) Π type Π type)
