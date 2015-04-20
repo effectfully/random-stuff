@@ -71,7 +71,7 @@ mutual
   data _≈_ : ∀ {n} {Γ Δ : Con n} -> Type Γ -> Type Δ -> Set where
     Weaken-Pop     : ∀ {n i} {Γ : Con n} {σ   : Type Γ} {τ υ}
                    -> Pop (Weaken i σ) ≈ Weaken (suc i) {σ = υ} (Pop {σ = τ} σ)
-    Pop-[]ᵀ        : ∀ {n}   {Γ : Con n} {σ   : Type Γ} {τ x}
+    Pop-[]         : ∀ {n}   {Γ : Con n} {σ   : Type Γ} {τ x}
                    -> σ ≈ Pop {σ = τ} σ [ x ]
     swap-Pop-Subst : ∀ {n i} {Γ : Con n} {σ   : Type Γ} {x τ υ}
                    -> Pop {σ = υ} (Subst i σ x) ≈ Subst (suc i) (Pop {σ = τ} σ) x
@@ -98,9 +98,9 @@ mutual
   subst  i      (ƛ b)     x = ƛ (subst (suc i) b x)
   subst  i      (f · y)   x = coe (subst i f x · subst i y x) fold-Subst
   subst  i      (↓ σ)     x = ↓ (Subst i σ x)
-  subst  zero    top      x = coe  x                  Pop-[]ᵀ
+  subst  zero    top      x = coe  x                  Pop-[]
   subst (suc _)  top      x = coe  top                swap-Pop-Subst
-  subst  zero   (pop y)   x = coe  y                  Pop-[]ᵀ
+  subst  zero   (pop y)   x = coe  y                  Pop-[]
   subst (suc i) (pop y)   x = coe (pop (subst i y x)) swap-Pop-Subst
   subst  i      (coe y r) x = coe      (subst i y x)  (cong-Subst r)
 
