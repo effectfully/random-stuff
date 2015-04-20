@@ -66,15 +66,15 @@ mutual
   _[_]ᵀ = Subst zero
 
   data _≈_ : ∀ {n} {Γ Δ : Con n} -> Type Γ -> Type Δ -> Set where
-    Weaken-Pop     : ∀ {n i} {Γ : Con n} {σ : Type Γ}   {τ υ}
+    Weaken-Pop     : ∀ {n i} {Γ : Con n} {σ   : Type Γ} {τ υ}
                    -> Pop (Weaken i σ) ≈ Weaken (suc i) {σ = υ} (Pop {σ = τ} σ)
-    Subst-zero-Pop : ∀ {n}   {Γ : Con n} {σ : Type Γ}   {τ x}
-                   -> σ ≈ Subst zero (Pop {σ = τ} σ) x
-    Subst-suc-Pop  : ∀ {n i} {Γ : Con n} {σ : Type Γ}   {x τ υ}
+    Pop-[]ᵀ        : ∀ {n}   {Γ : Con n} {σ   : Type Γ} {τ x}
+                   -> σ ≈ Pop {σ = τ} σ [ x ]ᵀ
+    swap-Pop-Subst : ∀ {n i} {Γ : Con n} {σ   : Type Γ} {x τ υ}
                    -> Pop {σ = υ} (Subst i σ x) ≈ Subst (suc i) (Pop {σ = τ} σ) x
-    fold-Weaken    : ∀ {n i} {Γ : Con n} {σ : Type Γ}   {x τ υ}
+    fold-Weaken    : ∀ {n i} {Γ : Con n} {σ   : Type Γ} {x τ υ}
                    -> Weaken (suc i) {σ = υ} τ [ weaken i {τ = σ} x ]ᵀ ≈ Weaken i {σ = υ} (τ [ x ]ᵀ)
-    fold-Subst     : ∀ {n i} {Γ : Con n} {σ : Type Γ}   {x τ} {y : Γ ⊢ σ}
+    fold-Subst     : ∀ {n i} {Γ : Con n} {σ   : Type Γ} {x τ} {y : Γ ⊢ σ}
                    -> Subst (suc i) τ x [ subst i y x ]ᵀ ≈ Subst i (τ [ y ]ᵀ) x
     cong-Weaken    : ∀ {n i} {Γ : Con n} {σ τ : Type Γ} {υ}
                    -> σ ≈ τ -> Weaken i {σ = υ} σ ≈ Weaken i τ
@@ -95,8 +95,8 @@ mutual
   subst  i      (ƛ b)     x = ƛ (subst (suc i) b x)
   subst  i      (f · y)   x = coe (subst i f x · subst i y x) fold-Subst
   subst  i      (↓ σ)     x = ↓ (Subst i σ x)
-  subst  zero    top      x = coe  x                Subst-zero-Pop
-  subst (suc _)  top      x = coe  top              Subst-suc-Pop
-  subst  zero   (pop y)   x = coe  y                Subst-zero-Pop
-  subst (suc i) (pop y)   x = coe (pop subst i y x) Subst-suc-Pop
-  subst  i      (coe y r) x = coe (subst i y x)     (cong-Subst r)
+  subst  zero    top      x = coe  x                  Pop-[]ᵀ
+  subst (suc _)  top      x = coe  top                swap-Pop-Subst
+  subst  zero   (pop y)   x = coe  y                  Pop-[]ᵀ
+  subst (suc i) (pop y)   x = coe (pop (subst i y x)) swap-Pop-Subst
+  subst  i      (coe y r) x = coe      (subst i y x)  (cong-Subst r)
