@@ -4,13 +4,16 @@ open import Data.Fin
 infixl 2 _,_
 infixr 2 _Π_
 infix  1 _⊢_ _≈_
-infix  2 _[_]ᵀ
+infix  2 _[_]
+
+infix  1 ƛ_
+infix  2 pop_
+infixl 4 _·_
 
 predⁿ : ∀ n -> Fin n -> ℕ
 predⁿ (suc n)  zero   = n
 predⁿ (suc n) (suc i) = suc (predⁿ n i)
 
--- This is because of the equalities. Is it OK?
 {-# TERMINATING #-}
 mutual
   data Con : ℕ -> Set where
@@ -24,7 +27,7 @@ mutual
 
   data _⊢_ : ∀ {n} (Γ : Con n) -> Type Γ -> Set where
     ƛ_   : ∀ {n} {Γ : Con n} {σ τ} -> Γ , σ ⊢ τ     -> Γ ⊢ σ Π τ
-    _·_  : ∀ {n} {Γ : Con n} {σ τ} -> Γ ⊢ σ Π τ     -> (x : Γ ⊢ σ)   -> Γ ⊢ τ [ x ]ᵀ
+    _·_  : ∀ {n} {Γ : Con n} {σ τ} -> Γ ⊢ σ Π τ     -> (x : Γ ⊢ σ)   -> Γ ⊢ τ [ x ]
     ↓    : ∀ {n} {Γ : Con n}       -> Type Γ        -> Γ ⊢ type
     top  : ∀ {n} {Γ : Con n} {σ}   -> Γ , σ ⊢ Pop σ
     pop_ : ∀ {n} {Γ : Con n} {σ τ} -> Γ ⊢ τ         -> Γ , σ ⊢ Pop τ
@@ -62,20 +65,20 @@ mutual
   Subst i (σ Π τ) x = Subst i σ x Π Subst (suc i) τ x
   Subst i (↑ t)   x = ↑ (subst i t x)
 
-  _[_]ᵀ : ∀ {n} {Γ : Con n} {σ} -> Type _ -> Γ ⊢ σ -> Type Γ
-  _[_]ᵀ = Subst zero
+  _[_] : ∀ {n} {Γ : Con n} {σ} -> Type _ -> Γ ⊢ σ -> Type Γ
+  _[_] = Subst zero
 
   data _≈_ : ∀ {n} {Γ Δ : Con n} -> Type Γ -> Type Δ -> Set where
     Weaken-Pop     : ∀ {n i} {Γ : Con n} {σ   : Type Γ} {τ υ}
                    -> Pop (Weaken i σ) ≈ Weaken (suc i) {σ = υ} (Pop {σ = τ} σ)
     Pop-[]ᵀ        : ∀ {n}   {Γ : Con n} {σ   : Type Γ} {τ x}
-                   -> σ ≈ Pop {σ = τ} σ [ x ]ᵀ
+                   -> σ ≈ Pop {σ = τ} σ [ x ]
     swap-Pop-Subst : ∀ {n i} {Γ : Con n} {σ   : Type Γ} {x τ υ}
                    -> Pop {σ = υ} (Subst i σ x) ≈ Subst (suc i) (Pop {σ = τ} σ) x
     fold-Weaken    : ∀ {n i} {Γ : Con n} {σ   : Type Γ} {x τ υ}
-                   -> Weaken (suc i) {σ = υ} τ [ weaken i {τ = σ} x ]ᵀ ≈ Weaken i {σ = υ} (τ [ x ]ᵀ)
+                   -> Weaken (suc i) {σ = υ} τ [ weaken i {τ = σ} x ] ≈ Weaken i {σ = υ} (τ [ x ])
     fold-Subst     : ∀ {n i} {Γ : Con n} {σ   : Type Γ} {x τ} {y : Γ ⊢ σ}
-                   -> Subst (suc i) τ x [ subst i y x ]ᵀ ≈ Subst i (τ [ y ]ᵀ) x
+                   -> Subst (suc i) τ x [ subst i y x ] ≈ Subst i (τ [ y ]) x
     cong-Weaken    : ∀ {n i} {Γ : Con n} {σ τ : Type Γ} {υ}
                    -> σ ≈ τ -> Weaken i {σ = υ} σ ≈ Weaken i τ
     cong-Subst     : ∀ {n i} {Γ : Con n} {σ τ : Type Γ} {x}
@@ -100,3 +103,10 @@ mutual
   subst  zero   (pop y)   x = coe  y                  Pop-[]ᵀ
   subst (suc i) (pop y)   x = coe (pop (subst i y x)) swap-Pop-Subst
   subst  i      (coe y r) x = coe      (subst i y x)  (cong-Subst r)
+
+Term : Type ε -> Set
+Term σ = ε ⊢ σ
+
+-- Not so terminating. OK, what's going on here?
+loop : Term ((type Π type) Π type Π type)
+loop = ƛ ƛ pop top · top
