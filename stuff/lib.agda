@@ -32,7 +32,7 @@ subst-removable-id : ∀ {ι α} {I : Set ι} {b : I -> Level} {i j : I}
 subst-removable-id A refl x F = id , id
 
 subst₂ : ∀ {α β γ} {A : Set α} {B : A -> Set β} {x y} {v w}
-        -> (C : ∀ x -> B x -> Set γ) -> x ≅ y -> v ≅ w -> C x v -> C y w
+       -> (C : ∀ x -> B x -> Set γ) -> x ≅ y -> v ≅ w -> C x v -> C y w
 subst₂ C refl refl = id
 
 isubst : ∀ {ι α β} {I : Set ι} {i j : I}
