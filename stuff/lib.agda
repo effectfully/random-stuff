@@ -48,9 +48,9 @@ icong A f refl refl = refl
 icong³ : ∀ {ι₁ ι₂ ι₃ α β} {I₁ : Set ι₁} {I₂ : I₁ -> Set ι₂}
          {I₃ : ∀ {i₁} -> I₂ i₁ -> Set ι₃}
          (A : ∀ i₁ -> (i₂ : I₂ i₁) -> I₃ i₂ -> Set α)
-         {B : ∀ {i₁} {i₂ : I₂ i₁} {i₃ : I₃ i₂} -> A i₁ i₂ i₃ -> Set β}
+         {B : ∀ {i₁ i₂ i₃} -> A i₁ i₂ i₃ -> Set β}
          {i₁ i₂ i₃ j₁ j₂ j₃} {x : A i₁ i₂ i₃} {y : A j₁ j₂ j₃}
-       -> (f : ∀ {i₁} {i₂ : I₂ i₁} {i₃ : I₃ i₂} -> (x : A i₁ i₂ i₃) -> B x)
+       -> (f : ∀ {i₁ i₂ i₃} -> (x : A i₁ i₂ i₃) -> B x)
        -> i₁ ≅ j₁ -> i₂ ≅ j₂ -> i₃ ≅ j₃ -> x ≅ y -> f x ≅ f y
 icong³ A f refl refl refl refl = refl
 
