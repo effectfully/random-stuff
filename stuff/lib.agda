@@ -45,6 +45,15 @@ icong : ∀ {ι α β} {I : Set ι} {i j : I}
       -> (f : ∀ {k} -> (x : A k) -> B x) -> i ≅ j -> x ≅ y -> f x ≅ f y
 icong A f refl refl = refl
 
+icong³ : ∀ {ι₁ ι₂ ι₃ α β} {I₁ : Set ι₁} {I₂ : I₁ -> Set ι₂}
+         {I₃ : ∀ {i₁} -> I₂ i₁ -> Set ι₃}
+         (A : ∀ i₁ -> (i₂ : I₂ i₁) -> I₃ i₂ -> Set α)
+         {B : ∀ {i₁} {i₂ : I₂ i₁} {i₃ : I₃ i₂} -> A i₁ i₂ i₃ -> Set β}
+         {i₁ i₂ i₃ j₁ j₂ j₃} {x : A i₁ i₂ i₃} {y : A j₁ j₂ j₃}
+       -> (f : ∀ {i₁} {i₂ : I₂ i₁} {i₃ : I₃ i₂} -> (x : A i₁ i₂ i₃) -> B x)
+       -> i₁ ≅ j₁ -> i₂ ≅ j₂ -> i₃ ≅ j₃ -> x ≅ y -> f x ≅ f y
+icong³ A f refl refl refl refl = refl
+
 icong₂ : ∀ {ι α β γ} {I : Set ι}
          (A : I -> Set α) {B : ∀ {k} -> A k -> Set β}
          {C : ∀ {k} -> (x : A k) -> B x -> Set γ}
