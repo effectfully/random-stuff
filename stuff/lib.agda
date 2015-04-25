@@ -68,3 +68,11 @@ icong₂ : ∀ {ι α β γ} {I : Set ι}
        -> (f : ∀ {k} -> (x : A k) -> (y : B x) -> C x y)
        -> i ≅ j -> x ≅ y -> v ≅ w -> f x v ≅ f y w
 icong₂ A f refl refl refl = refl
+
+icong²₂ : ∀ {ι₁ ι₂ α β γ} {I₁ : Set ι₁} {I₂ : I₁ -> Set ι₂}
+          (A : ∀ i₁ -> I₂ i₁ -> Set α) {B : ∀ {i₁ i₂} -> A i₁ i₂ -> Set β}
+          {C : ∀ {i₁ i₂} {x : A i₁ i₂} -> B x -> Set γ}
+          {i₁ i₂ j₁ j₂} {x : A i₁ i₂} {y : A j₁ j₂} {v w}
+        -> (f : ∀ {i₁ i₂} -> (x : A i₁ i₂) -> (y : B x) -> C y)
+        -> i₁ ≅ j₁ -> i₂ ≅ j₂ -> x ≅ y -> v ≅ w -> f x v ≅ f y w
+icong²₂ A f refl refl refl refl = refl
