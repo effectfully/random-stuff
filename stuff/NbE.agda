@@ -62,10 +62,6 @@ mutual
   fromⁿᶠ (ne n)  = fromⁿᵉ n
   fromⁿᶠ (ƛⁿᶠ b) = ƛ (fromⁿᶠ b)
 
-[_/_] : Con -> Type -> Set
-[ Γ / ι     ] = Γ ⊢ⁿᵉ ι
-[ Γ / σ ⇒ τ ] = ∀ Δ -> [ Γ ▻▻ Δ / σ ] -> [ Γ ▻▻ Δ / τ ]
-
 mutual
   weakenⁿᵉ : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Γ ⊢ⁿᵉ σ -> Δ ⊢ⁿᵉ σ
   weakenⁿᵉ sub (varⁿᵉ v) = varⁿᵉ (sub v)
@@ -74,6 +70,10 @@ mutual
   weakenⁿᶠ : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Γ ⊢ⁿᶠ σ -> Δ ⊢ⁿᶠ σ
   weakenⁿᶠ sub (ne n)  = ne (weakenⁿᵉ sub n)
   weakenⁿᶠ sub (ƛⁿᶠ b) = ƛⁿᶠ (weakenⁿᶠ (keep sub) b)
+
+[_/_] : Con -> Type -> Set
+[ Γ / ι     ] = Γ ⊢ⁿᵉ ι
+[ Γ / σ ⇒ τ ] = ∀ Δ -> [ Γ ▻▻ Δ / σ ] -> [ Γ ▻▻ Δ / τ ]
 
 cast : ∀ {Γ Δ σ} -> Γ ≡ Δ -> [ Γ / σ ] -> [ Δ / σ ]
 cast refl y = y
