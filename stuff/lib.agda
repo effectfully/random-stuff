@@ -11,9 +11,9 @@ const x = λ _ -> x
 _<->_ : ∀ {α β} -> Set α -> Set β -> Set (α ⊔ β)
 A <-> B = (A -> B) × (B -> A)
 
-subst-removable-cool : ∀ {α β γ} {I : Set α} {i j : I}
-                     -> (A : I -> Set β) {B : {k : I} -> A k -> Set γ} {x : A i}
-                     -> (f : {k : I} -> (x : A k) -> B x)
+subst-removable-cool : ∀ {ι α β} {I : Set ι} {i j : I}
+                     -> (A : I -> Set α) {B : ∀ {k} -> A k -> Set β} {x : A i}
+                     -> (f : ∀ {k} -> (x : A k) -> B x)
                      -> (i≅j : i ≅ j) {y : B (H.subst A i≅j x)}
                      -> f (H.subst A i≅j x) ≅ y
                      -> f x ≅ y
