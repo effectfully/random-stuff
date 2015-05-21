@@ -11,6 +11,14 @@ const x = λ _ -> x
 _<->_ : ∀ {α β} -> Set α -> Set β -> Set (α ⊔ β)
 A <-> B = (A -> B) × (B -> A)
 
+subst-removable-cool : ∀ {α β γ} {I : Set α} {i j : I}
+                     -> (A : I -> Set β) {B : {k : I} -> A k -> Set γ} {x : A i}
+                     -> (f : {k : I} -> (x : A k) -> B x)
+                     -> (i≅j : i ≅ j) {y : B (H.subst A i≅j x)}
+                     -> f (H.subst A i≅j x) ≅ y
+                     -> f x ≅ y
+subst-removable-cool A f refl r = r
+
 unsubst : ∀ {ι α} {I : Set ι} {A : I -> Set α} {i j : I} (i≡j : i ≡ j) {x : A i} {y : A j}
         -> P.subst A i≡j x ≡ y -> x ≅ y
 unsubst refl refl = refl
