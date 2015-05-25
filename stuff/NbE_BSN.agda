@@ -83,7 +83,7 @@ module NbE where
   norm σ = normᴾ (λ v -> reify σ v 0)
 
 module BSN where
-  record Fix (A : Set -> Set)  : Set where
+  record Fix (A : Set -> Set) : Set where
     constructor F
     field x : A (Fix A)
 
