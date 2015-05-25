@@ -70,14 +70,14 @@ module NbE where
   Val = Valᴾ Ñf
 
   mutual
-    reflect : Type -> Ñe -> Val
-    reflect  ⋆      x = v (ne ∘ x)
-    reflect (σ ⇒ τ) f = ƛᵛ (λ x -> reflect τ (λ i -> f i ·ⁿ reify σ x i))
-
     reify : Type -> Val -> Ñf
     reify  ⋆      (v x)  = x
     reify (σ ⇒ τ) (ƛᵛ f) = λ i -> ƛⁿ (reify τ (f (reflect σ (λ j -> varⁿ (j ∸ i ∸ 1)))) (suc i))
     reify  _       _     = undefined where postulate undefined : _
+    
+    reflect : Type -> Ñe -> Val
+    reflect  ⋆      x = v (ne ∘ x)
+    reflect (σ ⇒ τ) f = ƛᵛ λ x -> reflect τ (λ i -> f i ·ⁿ reify σ x i)
 
   norm : Type -> Term -> Term
   norm σ = normᴾ (λ v -> reify σ v 0)
@@ -94,13 +94,13 @@ module BSN where
   Neᵛ = Neᴾ Val
 
   mutual
-    quoteⁿ : ℕ -> Neᵛ -> Ne
-    quoteⁿ i (varⁿ j) = varⁿ (j ∸ i ∸ 1)
-    quoteⁿ i (f ·ⁿ x) = quoteⁿ i f ·ⁿ quoteᵛ i x
-
     quoteᵛ : ℕ -> Val -> Nf
     quoteᵛ i (F (v  x)) = ne (quoteⁿ i x)
     quoteᵛ i (F (ƛᵛ f)) = ƛⁿ (quoteᵛ (suc i) (F (f (v (varⁿ i)))))
+
+    quoteⁿ : ℕ -> Neᵛ -> Ne
+    quoteⁿ i (varⁿ j) = varⁿ (j ∸ i ∸ 1)
+    quoteⁿ i (f ·ⁿ x) = quoteⁿ i f ·ⁿ quoteᵛ i x
 
   norm : Term -> Term
   norm = normᴾ (quoteᵛ 0 ∘ F)
