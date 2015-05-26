@@ -9,7 +9,7 @@ open import Data.List
 lookup : ∀ {α} {A : Set α} -> ℕ -> List A -> A
 lookup  0      (x ∷ xs) = x
 lookup (suc n) (x ∷ xs) = lookup n xs
-lookup  _       _       = undefined where postulate undefined : _
+lookup  _       _       = ⊥ where postulate ⊥ : _
 
 data Type : Set where
   ⋆ : Type
@@ -49,7 +49,7 @@ Con A = List (Valᴾ A)
 
 _$ᵛ_ : ∀ {A} -> Valᴾ A -> Valᴾ A -> Valᴾ A
 ƛᵛ f $ᵛ x = f x
-v  x $ᵛ y = undefined where postulate undefined : _
+v  x $ᵛ y = ⊥ where postulate ⊥ : _
 
 ⟦_⟧ : ∀ {A} -> Term -> Con A -> Valᴾ A
 ⟦ var i ⟧ ρ = lookup i ρ
@@ -73,7 +73,7 @@ module NbE where
     reify : Type -> Val -> Ñf
     reify  ⋆      (v x)  = x
     reify (σ ⇒ τ) (ƛᵛ f) = λ i -> ƛⁿ (reify τ (f (reflect σ (λ j -> varⁿ (j ∸ i ∸ 1)))) (suc i))
-    reify  _       _     = undefined where postulate undefined : _
+    reify  _       _     = ⊥ where postulate ⊥ : _
     
     reflect : Type -> Ñe -> Val
     reflect  ⋆      x = v (ne ∘ x)
