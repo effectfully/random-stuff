@@ -99,7 +99,7 @@ module BSN where
     quoteᵛ i (F (ƛᵛ f)) = ƛⁿ (quoteᵛ (suc i) (F (f (v (varⁿ i)))))
 
     quoteⁿ : ℕ -> Neᵛ -> Ne
-    quoteⁿ i (varⁿ j) = varⁿ (j ∸ i ∸ 1)
+    quoteⁿ i (varⁿ j) = varⁿ (i ∸ j ∸ 1)
     quoteⁿ i (f ·ⁿ x) = quoteⁿ i f ·ⁿ quoteᵛ i x
 
   norm : Term -> Term
