@@ -1,3 +1,5 @@
+-- mostly stolen from https://github.com/jmchapman/Big-step-Normalisation/tree/master/LambdaCalculus/BasicSystem
+
 {-# OPTIONS --no-termination-check #-}
 
 infixr 5 _⇒_
