@@ -1,5 +1,3 @@
--- stolen from https://github.com/jmchapman/Big-step-Normalisation/tree/master/LambdaCalculus/BasicSystem
-
 {-# OPTIONS --no-termination-check #-}
 
 infixr 5 _⇒_
@@ -37,6 +35,15 @@ mutual
 
   _⊢ⁿᵉ_ : Con -> Type -> Set
   Γ ⊢ⁿᵉ σ = Γ ⊢ⁿᵉ[ _⊢ⁿᶠ_ ] σ
+
+mutual
+  fromⁿᵉ : ∀ {Γ σ} -> Γ ⊢ⁿᵉ σ -> Γ ⊢ σ
+  fromⁿᵉ (varⁿᵉ v) = var v
+  fromⁿᵉ (f ·ⁿᵉ x) = fromⁿᵉ f · fromⁿᶠ x
+
+  fromⁿᶠ : ∀ {Γ σ} -> Γ ⊢ⁿᶠ σ -> Γ ⊢ σ
+  fromⁿᶠ (neⁿᶠ n) = fromⁿᵉ n
+  fromⁿᶠ (ƛⁿᶠ  b) = ƛ (fromⁿᶠ b)
 
 data Env (B : Type -> Set) : Con -> Set where
   ø   : Env B ε
@@ -120,18 +127,8 @@ mutual
   quoteⁿᵉ (varⁿᵉ v) = varⁿᵉ v
   quoteⁿᵉ (f ·ⁿᵉ x) = quoteⁿᵉ f ·ⁿᵉ quoteⁿᶠ x
 
-mutual
-  fromⁿᵉ : ∀ {Γ σ} -> Γ ⊢ⁿᵉ σ -> Γ ⊢ σ
-  fromⁿᵉ (varⁿᵉ v) = var v
-  fromⁿᵉ (f ·ⁿᵉ x) = fromⁿᵉ f · fromⁿᶠ x
-
-  fromⁿᶠ : ∀ {Γ σ} -> Γ ⊢ⁿᶠ σ -> Γ ⊢ σ
-  fromⁿᶠ (neⁿᶠ n) = fromⁿᵉ n
-  fromⁿᶠ (ƛⁿᶠ  b) = ƛ (fromⁿᶠ b)
-
 normalize : ∀ {Γ σ} -> Γ ⊢ σ -> Γ ⊢ σ
 normalize x = fromⁿᶠ (quoteⁿᶠ ⟦ idᵉⁿᵛ / x ⟧)
-
 
 
 open import Relation.Binary.PropositionalEquality
