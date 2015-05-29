@@ -97,9 +97,9 @@ data Env (B : Type -> Set) : Con -> Set where
   Ø    : Env B ε
   _▷_ : ∀ {Γ σ} -> Env B Γ -> B σ -> Env B (Γ ▻ σ)
 
-lookup : ∀ {B Γ σ} -> σ ∈ Γ -> Env B Γ -> B σ
-lookup  vz    (ρ ▷ y) = y
-lookup (vs v) (ρ ▷ y) = lookup v ρ
+lookupᵉⁿᵛ : ∀ {B Γ σ} -> σ ∈ Γ -> Env B Γ -> B σ
+lookupᵉⁿᵛ  vz    (ρ ▷ y) = y
+lookupᵉⁿᵛ (vs v) (ρ ▷ y) = lookupᵉⁿᵛ v ρ
 
 mapᵉⁿᵛ : ∀ {B C : Type -> Set} {Γ}
         -> (∀ {σ} -> B σ -> C σ) -> Env B Γ -> Env C Γ
@@ -114,7 +114,7 @@ idᵉⁿᵛ {ε}     = Ø
 idᵉⁿᵛ {Γ ▻ σ} = mapᵉⁿᵛ (weakenˢᵉᵐ topˢᵘᵇ) idᵉⁿᵛ ▷ varˢᵉᵐ vz
 
 ⟦_⟧ : ∀ {Γ Δ σ} -> Γ ⊢ σ -> Γ ↦ Δ -> ⟦ σ ⟧ᵀ Δ
-⟦ var v ⟧ ρ = lookup v ρ
+⟦ var v ⟧ ρ = lookupᵉⁿᵛ v ρ
 ⟦ ƛ b   ⟧ ρ = λ φ y -> ⟦ b ⟧ (mapᵉⁿᵛ (weakenˢᵉᵐ φ) ρ ▷ y)
 ⟦ f · x ⟧ ρ = ⟦ f ⟧ ρ idˢᵘᵇ (⟦ x ⟧ ρ)
 
