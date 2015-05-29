@@ -1,9 +1,9 @@
 infixr 5 _⇒_
 infixl 6 _▻_
-infix  3 _⊢_ _∈_ _⊢ⁿᵉ_ _⊢ⁿᶠ_ _⊆_ _⊢ʷⁿᵉ_ _⊢ʷⁿᶠ_
-infixr 3 vs_
-infixr 2 ƛ_
-infixl 5 _·_
+infix  3 _⊢_ _∈_ _⊢ⁿᵉ_ _⊢ⁿᶠ_ _⊆_ _⊢ʷⁿᵉ_ _⊢ʷⁿᶠ_ _↦_
+infixr 5 vs_
+infixr 4 ƛ_
+infixl 6 _·_
 
 data Type : Set where
   ι    : Type
@@ -69,10 +69,6 @@ mutual
 ⟦ ι     ⟧ᵀ Γ = Γ ⊢ʷⁿᵉ ι
 ⟦ σ ⇒ τ ⟧ᵀ Γ = ∀ {Δ} -> Γ ⊆ Δ -> ⟦ σ ⟧ᵀ Δ -> ⟦ τ ⟧ᵀ Δ
 
-weakenˢᵉᵐ : ∀ {σ Γ Δ} -> Γ ⊆ Δ -> ⟦ σ ⟧ᵀ Γ -> ⟦ σ ⟧ᵀ Δ
-weakenˢᵉᵐ {ι}     ψ x = weakenʷⁿᵉ ψ x
-weakenˢᵉᵐ {σ ⇒ τ} ψ f = λ φ y -> f (φ ∘ˢᵘᵇ ψ) y
-
 mutual
   ↑ : ∀ {σ Γ} -> Γ ⊢ʷⁿᵉ σ -> ⟦ σ ⟧ᵀ Γ
   ↑ {ι}     n = n
@@ -93,38 +89,36 @@ weakenᵛᵃʳ (keep ψ) (vs v) = vs (weakenᵛᵃʳ ψ v)
 
 mutual
   unʷⁿᵉ : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Γ ⊢ʷⁿᵉ σ -> Δ ⊢ⁿᵉ σ
-  unʷⁿᵉ ψ (varʷⁿᵉ v)      = varⁿᵉ (weakenᵛᵃʳ ψ v)
-  unʷⁿᵉ ψ (f ·ʷⁿᵉ x)      = unʷⁿᵉ ψ f ·ⁿᵉ unʷⁿᶠ ψ x
+  unʷⁿᵉ φ (varʷⁿᵉ v)      = varⁿᵉ (weakenᵛᵃʳ φ v)
+  unʷⁿᵉ φ (f ·ʷⁿᵉ x)      = unʷⁿᵉ φ f ·ⁿᵉ unʷⁿᶠ φ x
   unʷⁿᵉ φ (weakenʷⁿᵉ ψ x) = unʷⁿᵉ (φ ∘ˢᵘᵇ ψ) x
 
   unʷⁿᶠ : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Γ ⊢ʷⁿᶠ σ -> Δ ⊢ⁿᶠ σ
   unʷⁿᶠ ψ (neʷ x)  = ne (unʷⁿᵉ ψ x)
   unʷⁿᶠ ψ (ƛʷⁿᶠ b) = ƛⁿᶠ (unʷⁿᶠ (keep ψ) b)
 
-data Env (B : Type -> Set) : Con -> Set where
-  Ø    : Env B ε
-  _▷_ : ∀ {Γ σ} -> Env B Γ -> B σ -> Env B (Γ ▻ σ)
+data _↦_ : Con -> Con -> Set where
+  Ø         : ∀ {Γ}     -> ε ↦ Γ
+  _▷_       : ∀ {Γ Δ σ} -> Γ ↦ Δ -> ⟦ σ ⟧ᵀ Δ -> Γ ▻ σ ↦ Δ
+  weakenᵉⁿᵛ : ∀ {Γ Δ Θ} -> Δ ⊆ Θ -> Γ ↦ Δ    -> Γ ↦ Θ
 
-lookupᵉⁿᵛ : ∀ {B Γ σ} -> σ ∈ Γ -> Env B Γ -> B σ
-lookupᵉⁿᵛ  vz    (ρ ▷ y) = y
-lookupᵉⁿᵛ (vs v) (ρ ▷ y) = lookupᵉⁿᵛ v ρ
+weakenˢᵉᵐ : ∀ {σ Γ Δ} -> Γ ⊆ Δ -> ⟦ σ ⟧ᵀ Γ -> ⟦ σ ⟧ᵀ Δ
+weakenˢᵉᵐ {ι}     ψ x = weakenʷⁿᵉ ψ x
+weakenˢᵉᵐ {σ ⇒ τ} ψ f = λ φ y -> f (φ ∘ˢᵘᵇ ψ) y
 
-mapᵉⁿᵛ : ∀ {B C : Type -> Set} {Γ}
-        -> (∀ {σ} -> B σ -> C σ) -> Env B Γ -> Env C Γ
-mapᵉⁿᵛ f  Ø      = Ø
-mapᵉⁿᵛ f (ρ ▷ y) = mapᵉⁿᵛ f ρ ▷ f y
+lookupᵉⁿᵛ : ∀ {Γ Δ Θ σ} -> Δ ⊆ Θ -> σ ∈ Γ -> Γ ↦ Δ -> ⟦ σ ⟧ᵀ Θ
+lookupᵉⁿᵛ φ  vz    (ρ ▷ y)         = weakenˢᵉᵐ φ y
+lookupᵉⁿᵛ φ (vs v) (ρ ▷ y)         = lookupᵉⁿᵛ φ v ρ
+lookupᵉⁿᵛ φ  v     (weakenᵉⁿᵛ ψ ρ) = lookupᵉⁿᵛ (φ ∘ˢᵘᵇ ψ) v ρ
 
-_↦_ : Con -> Con -> Set
-Γ ↦ Δ = Env (λ σ -> ⟦ σ ⟧ᵀ Δ) Γ
+⟦_⟧ : ∀ {Γ Δ σ} -> Γ ⊢ σ -> Γ ↦ Δ -> ⟦ σ ⟧ᵀ Δ
+⟦ var v ⟧ ρ = lookupᵉⁿᵛ stop v ρ
+⟦ ƛ b   ⟧ ρ = λ ψ y -> ⟦ b ⟧ (weakenᵉⁿᵛ ψ ρ ▷ y)
+⟦ f · x ⟧ ρ = ⟦ f ⟧ ρ stop (⟦ x ⟧ ρ)
 
 idᵉⁿᵛ : ∀ {Γ} -> Γ ↦ Γ
 idᵉⁿᵛ {ε}     = Ø
-idᵉⁿᵛ {Γ ▻ σ} = mapᵉⁿᵛ (weakenˢᵉᵐ topˢᵘᵇ) idᵉⁿᵛ ▷ varˢᵉᵐ vz
-
-⟦_⟧ : ∀ {Γ Δ σ} -> Γ ⊢ σ -> Γ ↦ Δ -> ⟦ σ ⟧ᵀ Δ
-⟦ var v ⟧ ρ = lookupᵉⁿᵛ v ρ
-⟦ ƛ b   ⟧ ρ = λ φ y -> ⟦ b ⟧ (mapᵉⁿᵛ (weakenˢᵉᵐ φ) ρ ▷ y)
-⟦ f · x ⟧ ρ = ⟦ f ⟧ ρ stop (⟦ x ⟧ ρ)
+idᵉⁿᵛ {Γ ▻ σ} = weakenᵉⁿᵛ topˢᵘᵇ idᵉⁿᵛ ▷ varˢᵉᵐ vz
 
 norm : ∀ {Γ σ} -> Γ ⊢ σ -> Γ ⊢ σ
 norm x = fromⁿᶠ (unʷⁿᶠ stop (↓ (⟦ x ⟧ idᵉⁿᵛ)))
