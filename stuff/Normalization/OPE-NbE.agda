@@ -101,22 +101,22 @@ lookup : ∀ {B Γ σ} -> σ ∈ Γ -> Env B Γ -> B σ
 lookup  vz    (ρ ▷ y) = y
 lookup (vs v) (ρ ▷ y) = lookup v ρ
 
-map-Env : ∀ {B C : Type -> Set} {Γ}
+mapᵉⁿᵛ : ∀ {B C : Type -> Set} {Γ}
         -> (∀ {σ} -> B σ -> C σ) -> Env B Γ -> Env C Γ
-map-Env f  Ø      = Ø
-map-Env f (ρ ▷ y) = map-Env f ρ ▷ f y
+mapᵉⁿᵛ f  Ø      = Ø
+mapᵉⁿᵛ f (ρ ▷ y) = mapᵉⁿᵛ f ρ ▷ f y
 
 _↦_ : Con -> Con -> Set
 Γ ↦ Δ = Env (λ σ -> ⟦ σ ⟧ᵀ Δ) Γ
 
 idᵉⁿᵛ : ∀ {Γ} -> Γ ↦ Γ
 idᵉⁿᵛ {ε}     = Ø
-idᵉⁿᵛ {Γ ▻ σ} = map-Env (weakenˢᵉᵐ topˢᵘᵇ) idᵉⁿᵛ ▷ varˢᵉᵐ vz
+idᵉⁿᵛ {Γ ▻ σ} = mapᵉⁿᵛ (weakenˢᵉᵐ topˢᵘᵇ) idᵉⁿᵛ ▷ varˢᵉᵐ vz
 
 ⟦_⟧ : ∀ {Γ Δ σ} -> Γ ⊢ σ -> Γ ↦ Δ -> ⟦ σ ⟧ᵀ Δ
 ⟦ var v ⟧ ρ = lookup v ρ
-⟦ ƛ b   ⟧ ρ = λ φ y -> ⟦ b ⟧ (map-Env (weakenˢᵉᵐ φ) ρ ▷ y)
-⟦ f · x ⟧ ρ =  ⟦ f ⟧ ρ idˢᵘᵇ (⟦ x ⟧ ρ)
+⟦ ƛ b   ⟧ ρ = λ φ y -> ⟦ b ⟧ (mapᵉⁿᵛ (weakenˢᵉᵐ φ) ρ ▷ y)
+⟦ f · x ⟧ ρ = ⟦ f ⟧ ρ idˢᵘᵇ (⟦ x ⟧ ρ)
 
 normalize : ∀ {Γ σ} -> Γ ⊢ σ -> Γ ⊢ σ
 normalize x = fromⁿᶠ (↓ (⟦ x ⟧ idᵉⁿᵛ))
