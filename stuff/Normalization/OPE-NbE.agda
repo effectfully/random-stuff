@@ -1,6 +1,6 @@
 infixr 5 _⇒_
 infixl 6 _▻_
-infix  3 _⊢_ _∈_ _⊢ⁿᵉ_ _⊢ⁿᶠ_ _⊆_
+infix  3 _⊢_ _∈_ _⊢ⁿᵉ_ _⊢ⁿᶠ_ _⊆_ _⊢ʷⁿᵉ_ _⊢ʷⁿᶠ_
 infixr 3 vs_
 infixr 2 ƛ_
 infixl 5 _·_
@@ -41,57 +41,65 @@ mutual
   fromⁿᶠ (ƛⁿᶠ b) = ƛ (fromⁿᶠ b)
 
 data _⊆_ : Con -> Con -> Set where
-  stop : ε ⊆ ε
+  stop : ∀ {Γ}     -> Γ ⊆ Γ
   skip : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Γ     ⊆ Δ ▻ σ
   keep : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Γ ▻ σ ⊆ Δ ▻ σ
 
-idˢᵘᵇ : ∀ {Γ} -> Γ ⊆ Γ
-idˢᵘᵇ {ε}     = stop
-idˢᵘᵇ {Γ ▻ σ} = keep idˢᵘᵇ
-
 topˢᵘᵇ : ∀ {Γ σ} -> Γ ⊆ Γ ▻ σ
-topˢᵘᵇ = skip idˢᵘᵇ
+topˢᵘᵇ = skip stop
 
 _∘ˢᵘᵇ_ : ∀ {Γ Δ Θ} -> Δ ⊆ Θ -> Γ ⊆ Δ -> Γ ⊆ Θ
 stop   ∘ˢᵘᵇ ψ      = ψ
 skip φ ∘ˢᵘᵇ ψ      = skip (φ ∘ˢᵘᵇ ψ)
+keep φ ∘ˢᵘᵇ stop   = keep  φ
 keep φ ∘ˢᵘᵇ skip ψ = skip (φ ∘ˢᵘᵇ ψ)
 keep φ ∘ˢᵘᵇ keep ψ = keep (φ ∘ˢᵘᵇ ψ)
 
+mutual
+  data _⊢ʷⁿᵉ_ Δ : Type -> Set where
+    varʷⁿᵉ    : ∀ {σ}   -> σ ∈ Δ        -> Δ ⊢ʷⁿᵉ σ
+    _·ʷⁿᵉ_    : ∀ {σ τ} -> Δ ⊢ʷⁿᵉ σ ⇒ τ -> Δ ⊢ʷⁿᶠ σ -> Δ ⊢ʷⁿᵉ τ
+    weakenʷⁿᵉ : ∀ {Γ σ} -> Γ ⊆ Δ        -> Γ ⊢ʷⁿᵉ σ -> Δ ⊢ʷⁿᵉ σ
+
+  data _⊢ʷⁿᶠ_ Γ : Type -> Set where
+    neʷ   : ∀ {σ}   -> Γ ⊢ʷⁿᵉ σ     -> Γ ⊢ʷⁿᶠ σ
+    ƛʷⁿᶠ_ : ∀ {σ τ} -> Γ ▻ σ ⊢ʷⁿᶠ τ -> Γ ⊢ʷⁿᶠ σ ⇒ τ
+
+⟦_⟧ᵀ : Type -> Con -> Set
+⟦ ι     ⟧ᵀ Γ = Γ ⊢ʷⁿᵉ ι
+⟦ σ ⇒ τ ⟧ᵀ Γ = ∀ {Δ} -> Γ ⊆ Δ -> ⟦ σ ⟧ᵀ Δ -> ⟦ τ ⟧ᵀ Δ
+
+weakenˢᵉᵐ : ∀ {σ Γ Δ} -> Γ ⊆ Δ -> ⟦ σ ⟧ᵀ Γ -> ⟦ σ ⟧ᵀ Δ
+weakenˢᵉᵐ {ι}     ψ x = weakenʷⁿᵉ ψ x
+weakenˢᵉᵐ {σ ⇒ τ} ψ f = λ φ y -> f (φ ∘ˢᵘᵇ ψ) y
+
+mutual
+  ↑ : ∀ {σ Γ} -> Γ ⊢ʷⁿᵉ σ -> ⟦ σ ⟧ᵀ Γ
+  ↑ {ι}     n = n
+  ↑ {σ ⇒ τ} f = λ ψ y -> ↑ (weakenʷⁿᵉ ψ f ·ʷⁿᵉ ↓ y)
+
+  ↓ : ∀ {σ Γ} -> ⟦ σ ⟧ᵀ Γ -> Γ ⊢ʷⁿᶠ σ
+  ↓ {ι}     n = neʷ n
+  ↓ {σ ⇒ τ} f = ƛʷⁿᶠ (↓ (f topˢᵘᵇ (varˢᵉᵐ vz)))
+
+  varˢᵉᵐ : ∀ {Γ σ} -> σ ∈ Γ -> ⟦ σ ⟧ᵀ Γ
+  varˢᵉᵐ v = ↑ (varʷⁿᵉ v)
+
 weakenᵛᵃʳ : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> σ ∈ Γ -> σ ∈ Δ
-weakenᵛᵃʳ  stop     ()
+weakenᵛᵃʳ  stop     v     = v
 weakenᵛᵃʳ (skip ψ)  v     = vs (weakenᵛᵃʳ ψ v)
 weakenᵛᵃʳ (keep ψ)  vz    = vz
 weakenᵛᵃʳ (keep ψ) (vs v) = vs (weakenᵛᵃʳ ψ v)
 
 mutual
-  weakenⁿᵉ : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Γ ⊢ⁿᵉ σ -> Δ ⊢ⁿᵉ σ
-  weakenⁿᵉ ψ (varⁿᵉ v) = varⁿᵉ (weakenᵛᵃʳ ψ v)
-  weakenⁿᵉ ψ (f ·ⁿᵉ x) = weakenⁿᵉ ψ f ·ⁿᵉ weakenⁿᶠ ψ x
+  unʷⁿᵉ : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Γ ⊢ʷⁿᵉ σ -> Δ ⊢ⁿᵉ σ
+  unʷⁿᵉ ψ (varʷⁿᵉ v)      = varⁿᵉ (weakenᵛᵃʳ ψ v)
+  unʷⁿᵉ ψ (f ·ʷⁿᵉ x)      = unʷⁿᵉ ψ f ·ⁿᵉ unʷⁿᶠ ψ x
+  unʷⁿᵉ φ (weakenʷⁿᵉ ψ x) = unʷⁿᵉ (φ ∘ˢᵘᵇ ψ) x
 
-  weakenⁿᶠ : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Γ ⊢ⁿᶠ σ -> Δ ⊢ⁿᶠ σ
-  weakenⁿᶠ ψ (ne n)  = ne (weakenⁿᵉ ψ n)
-  weakenⁿᶠ ψ (ƛⁿᶠ b) = ƛⁿᶠ (weakenⁿᶠ (keep ψ) b)
-
-⟦_⟧ᵀ : Type -> Con -> Set
-⟦ ι     ⟧ᵀ Γ = Γ ⊢ⁿᵉ ι
-⟦ σ ⇒ τ ⟧ᵀ Γ = ∀ {Δ} -> Γ ⊆ Δ -> ⟦ σ ⟧ᵀ Δ -> ⟦ τ ⟧ᵀ Δ
-
-weakenˢᵉᵐ : ∀ {σ Γ Δ} -> Γ ⊆ Δ -> ⟦ σ ⟧ᵀ Γ -> ⟦ σ ⟧ᵀ Δ
-weakenˢᵉᵐ {ι}     ψ x = weakenⁿᵉ ψ x
-weakenˢᵉᵐ {σ ⇒ τ} ψ f = λ φ y -> f (φ ∘ˢᵘᵇ ψ) y
-
-mutual
-  ↑ : ∀ {σ Γ} -> Γ ⊢ⁿᵉ σ -> ⟦ σ ⟧ᵀ Γ
-  ↑ {ι}     n = n
-  ↑ {σ ⇒ τ} f = λ ψ y -> ↑ (weakenⁿᵉ ψ f ·ⁿᵉ ↓ y)
-
-  ↓ : ∀ {σ Γ} -> ⟦ σ ⟧ᵀ Γ -> Γ ⊢ⁿᶠ σ
-  ↓ {ι}     n = ne n
-  ↓ {σ ⇒ τ} f = ƛⁿᶠ (↓ (f topˢᵘᵇ (varˢᵉᵐ vz)))
-
-  varˢᵉᵐ : ∀ {Γ σ} -> σ ∈ Γ -> ⟦ σ ⟧ᵀ Γ
-  varˢᵉᵐ v = ↑ (varⁿᵉ v)
+  unʷⁿᶠ : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Γ ⊢ʷⁿᶠ σ -> Δ ⊢ⁿᶠ σ
+  unʷⁿᶠ ψ (neʷ x)  = ne (unʷⁿᵉ ψ x)
+  unʷⁿᶠ ψ (ƛʷⁿᶠ b) = ƛⁿᶠ (unʷⁿᶠ (keep ψ) b)
 
 data Env (B : Type -> Set) : Con -> Set where
   Ø    : Env B ε
@@ -116,10 +124,10 @@ idᵉⁿᵛ {Γ ▻ σ} = mapᵉⁿᵛ (weakenˢᵉᵐ topˢᵘᵇ) idᵉⁿᵛ 
 ⟦_⟧ : ∀ {Γ Δ σ} -> Γ ⊢ σ -> Γ ↦ Δ -> ⟦ σ ⟧ᵀ Δ
 ⟦ var v ⟧ ρ = lookupᵉⁿᵛ v ρ
 ⟦ ƛ b   ⟧ ρ = λ φ y -> ⟦ b ⟧ (mapᵉⁿᵛ (weakenˢᵉᵐ φ) ρ ▷ y)
-⟦ f · x ⟧ ρ = ⟦ f ⟧ ρ idˢᵘᵇ (⟦ x ⟧ ρ)
+⟦ f · x ⟧ ρ = ⟦ f ⟧ ρ stop (⟦ x ⟧ ρ)
 
-normalize : ∀ {Γ σ} -> Γ ⊢ σ -> Γ ⊢ σ
-normalize x = fromⁿᶠ (↓ (⟦ x ⟧ idᵉⁿᵛ))
+norm : ∀ {Γ σ} -> Γ ⊢ σ -> Γ ⊢ σ
+norm x = fromⁿᶠ (unʷⁿᶠ stop (↓ (⟦ x ⟧ idᵉⁿᵛ)))
 
 
 
@@ -137,5 +145,5 @@ K = ƛ ƛ var (vs vz)
 S : Term ((ι ⇒ ι ⇒ ι) ⇒ (ι ⇒ ι) ⇒ ι ⇒ ι)
 S = ƛ ƛ ƛ var (vs vs vz) · var vz · (var (vs vz) · var vz)
 
-test : normalize (S · K · I) ≡ I
+test : norm (S · K · I) ≡ I
 test = refl
