@@ -51,7 +51,7 @@ topˢᵘᵇ = skip stop
 _∘ˢᵘᵇ_ : ∀ {Γ Δ Θ} -> Δ ⊆ Θ -> Γ ⊆ Δ -> Γ ⊆ Θ
 stop   ∘ˢᵘᵇ ψ      = ψ
 skip φ ∘ˢᵘᵇ ψ      = skip (φ ∘ˢᵘᵇ ψ)
-keep φ ∘ˢᵘᵇ stop   = keep  φ
+keep φ ∘ˢᵘᵇ stop   = keep φ
 keep φ ∘ˢᵘᵇ skip ψ = skip (φ ∘ˢᵘᵇ ψ)
 keep φ ∘ˢᵘᵇ keep ψ = keep (φ ∘ˢᵘᵇ ψ)
 
