@@ -6,7 +6,7 @@ infixr 4 ƛ_
 infixl 6 _·_
 
 data Type : Set where
-  ι    : Type
+  ι   : Type
   _⇒_ : Type -> Type -> Type
 
 data Con : Set where
