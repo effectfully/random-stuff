@@ -1,3 +1,5 @@
+-- related to http://stackoverflow.com/questions/31105947/eliminating-a-maybe-at-the-type-level/
+
 open import Level
 open import Function
 open import Relation.Binary.PropositionalEquality
