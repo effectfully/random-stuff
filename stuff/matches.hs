@@ -11,7 +11,7 @@ matches :: String -> String -> Bool
 matches = go . map Left where
   go            []  [] = True
   go (Left  p : ps) xs = or [ go (map (subst p ixs) ps) txs
-                                 | (ixs, txs) <- tail $ zip (inits xs) (tails xs) ]
+                            | (ixs, txs) <- tail $ zip (inits xs) (tails xs) ]
   go (Right s : ps) xs = fromMaybe False $ go ps <$> stripPrefix s xs
   go            _   _  = False
 
