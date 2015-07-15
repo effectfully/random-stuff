@@ -1,6 +1,5 @@
 -- totally isomorphic to [], even in a strict monad
 -- no redundant (<= 0) checks in the `drop' function
--- the `zipWith' function is still O(n^2)
 
 {-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE BangPatterns #-}
