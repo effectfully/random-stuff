@@ -76,7 +76,6 @@ record InAgda : Set where
   _⁻¹_ = f⁻¹
 
   module _ {α} {A B : Set α} {f : A -> B} where
-    -- Is not related to Agda.
     Iso->Mono&Epi : {{_ : Iso f}} -> Mono f × Epi f
     Iso->Mono&Epi = record
       { mono = λ {C g h} p x ->

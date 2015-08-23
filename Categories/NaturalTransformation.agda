@@ -42,8 +42,8 @@ idⁿ : ∀
   {C₁ : IsCategory _⇒₁_} {C₂ : IsCategory _⇒₂_} {Ψ₀ : Obj₁ -> Obj₂} {{Ψ : IsFunctor _⇒₁_ _⇒₂_ Ψ₀}}
   -> IsNaturalTransformation Ψ Ψ
 idⁿ {C₂ = C₂} = record
-  { η          = λ {O}         -> id
-  ; naturality = λ {A} {B} {f} ->
+  { η          = λ {O}     -> id
+  ; naturality = λ {A B f} ->
       begin
         id ∘ F₁ f →⟨ idˡ ⟩
         F₁ f      ←⟨ idʳ ⟩

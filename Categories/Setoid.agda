@@ -41,7 +41,7 @@ record Setoid-Instances : Set where
   instance
 -- That's where the idea "_≈_ can't lie in a universe higher than a universe where A lies" fails.
 --     →-Setoid : ∀ {α} {A B : Set α} -> Setoid (A -> B)
---     →-Setoid {A} {B} = record
+--     →-Setoid {A = A} {B = B} = record
 --       { _≈_           = λ f g -> {{setoid : Setoid B}} -> ∀ x -> f x ≈ g x
 --       ; isEquivalence = record
 --         { refl  = λ     x -> refl

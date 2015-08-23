@@ -5,7 +5,7 @@ import Control.Monad
 import Control.Arrow
 import Control.Monad.Trans.State
 
-lookupDelete k [] =  Nothing
+lookupDelete k  []          = Nothing
 lookupDelete k ((x, y):xys)
     | k == x    = Just (y, xys)
     | otherwise = second ((x, y):) <$> lookupDelete k xys
@@ -38,7 +38,7 @@ parse p = words >>> optPairs >=> runStateT p >=> finish
 
 data User = User
 	{ userName :: String
-	, userId :: Integer
+	, userId   :: Integer
 	, userDbls :: (Double, Double)
 	} deriving Show
 
