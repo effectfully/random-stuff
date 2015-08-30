@@ -21,7 +21,7 @@ pfuse :: PList a -> PList a
 pfuse = pfoldr pcons pnil
 
 pappend :: PList a -> PList a -> PList a
-pappend xs ys = PList $ \f -> runPList xs f . runPList ys f
+pappend xs ys = PList $ \f -> runPList xs (\xs -> f (pappend xs ys)) . runPList ys f
 
 pmap :: (a -> b) -> PList a -> PList b
 pmap h xs = PList $ \f -> runPList xs (\xs' -> f (pmap h xs') . h)
