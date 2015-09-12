@@ -18,18 +18,25 @@ type family IterN n f a where
   IterN  Z    f a = a
   IterN (S n) f a = f (IterN n f a)
 
-runFree :: Functor f => HomoFree n f a -> IterN n f a
-runFree (Pure  x) = x
-runFree (Free fx) = runFree <$> fx
+toFree :: (Functor f, SingI n) => IterN n f a -> HomoFree n f a
+toFree = go sing where
+    go :: Functor f => Sing n -> IterN n f a -> HomoFree n f a
+    go  SZ    x  = Pure x
+    go (SS n) fx = Free $ go n <$> fx
+
+fromFree :: Functor f => HomoFree n f a -> IterN n f a
+fromFree (Pure  x) = x
+fromFree (Free fx) = fromFree <$> fx
 
 lowerFree :: (Functor f, SingI n) => HomoFree (S n) f a -> HomoFree n f (f a)
 lowerFree = go sing where
     go :: Functor f => Sing n -> HomoFree (S n) f a -> HomoFree n f (f a)
-    go  SZ    (Free fx) = Pure $ runFree <$> fx
+    go  SZ    (Free fx) = Pure $ fromFree <$> fx
     go (SS n) (Free fx) = Free $ go n <$> fx
 
-xs = Free [Free [Pure 1, Pure 2], Free [Pure 3, Pure 4, Pure 5]]
+xs = [[[1, 2, 3], [4, 5, 6]], [[7, 8, 9]]]
 
 main = do
-    print $ runFree . mapFree (+ 1)           $ xs -- [[2,3],[4,5,6]]
-    print $ runFree . mapFree sum . lowerFree $ xs -- [3,12]
+    print $ fromFree . mapFree (+ 1)             $ (toFree xs :: HomoFree (S (S (S Z))) []  Int ) -- [[[2,3,4],[5,6,7]],[[8,9,10]]]
+    print $ fromFree . mapFree  sum              $ (toFree xs :: HomoFree (S (S  Z   )) [] [Int]) -- [[6,15],[24]]
+    print $ fromFree . mapFree  sum  . lowerFree $ (toFree xs :: HomoFree (S (S (S Z))) []  Int ) -- [[6,15],[24]]
