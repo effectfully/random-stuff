@@ -1,4 +1,4 @@
-{-# LANGUAGE GADTs, DataKinds, TypeFamilies, TemplateHaskell #-}
+{-# LANGUAGE GADTs, DataKinds, TypeFamilies, TemplateHaskell, TypeOperators #-}
 
 import Data.Functor
 import Data.Singletons.TH
@@ -11,8 +11,8 @@ data HomoFree n f a where
     Free :: f (HomoFree n f a) -> HomoFree (S n) f a
 
 mapFree :: Functor f => (a -> b) -> HomoFree n f a -> HomoFree n f b
-mapFree f (Pure  x) = Pure (f x)
-mapFree f (Free fx) = Free (mapFree f <$> fx)
+mapFree f (Pure  x) = Pure $ f x
+mapFree f (Free fx) = Free $ mapFree f <$> fx
 
 type family IterN n f a where
   IterN  Z    f a = a
@@ -34,9 +34,25 @@ lowerFree = go sing where
     go  SZ    (Free fx) = Pure $ fromFree <$> fx
     go (SS n) (Free fx) = Free $ go n <$> fx
 
+type family n :+ m :: Nat where
+  Z     :+ m = m
+  (S n) :+ m = S (n :+ m)
+
+nmapFree :: Functor f
+         => Sing n
+         -> (HomoFree m f a -> HomoFree p f b)
+         -> HomoFree (n :+ m) f a
+         -> HomoFree (n :+ p) f b
+nmapFree  SZ    f  h        = f h
+nmapFree (SS n) f (Free fx) = Free $ nmapFree n f <$> fx
+
+sumFree :: SingI n => HomoFree (S n) [] Int -> HomoFree n [] Int
+sumFree = mapFree sum . lowerFree
+
 xs = [[[1, 2, 3], [4, 5, 6]], [[7, 8, 9]]]
 
 main = do
-    print $ fromFree . mapFree (+ 1)             $ (toFree xs :: HomoFree (S (S (S Z))) []  Int ) -- [[[2,3,4],[5,6,7]],[[8,9,10]]]
-    print $ fromFree . mapFree  sum              $ (toFree xs :: HomoFree (S (S  Z   )) [] [Int]) -- [[6,15],[24]]
-    print $ fromFree . mapFree  sum  . lowerFree $ (toFree xs :: HomoFree (S (S (S Z))) []  Int ) -- [[6,15],[24]]
+    print $ fromFree . mapFree (+ 1)                  $ (toFree xs :: HomoFree (S (S (S Z))) []  Int ) -- [[[2,3,4],[5,6,7]],[[8,9,10]]]
+    print $ fromFree . mapFree  sum                   $ (toFree xs :: HomoFree (S (S  Z   )) [] [Int]) -- [[6,15],[24]]
+    print $ fromFree . sumFree                        $ (toFree xs :: HomoFree (S (S (S Z))) []  Int ) -- [[6,15],[24]]
+    print $ fromFree . nmapFree (SS (SS SZ)) sumFree  $ (toFree xs :: HomoFree (S (S (S Z))) []  Int ) -- [[6,15],[24]]
