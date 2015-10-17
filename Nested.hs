@@ -1,6 +1,6 @@
 -- A lightweight and not very expressive alternative to monad transformers.
 
-{-# LANGUAGE TypeOperators, ConstraintKinds #-}
+{-# LANGUAGE ConstraintKinds #-}
 
 import Data.Foldable    as F
 import Data.Traversable as T
@@ -22,18 +22,16 @@ jojoin = (>>= liftM join . T.sequence)
 bibind :: NestedMonads m t => m (t a) -> (a -> m (t b)) -> m (t b)
 bibind x f = jojoin (liliftM f x)
 
-newtype (f :. g) a = Nested { getNested :: f (g a) }
+newtype Nested f g a = Nested { getNested :: f (g a) }
 
-instance (Monad m, Traversable t, Monad t) => Monad (m :. t) where
+instance NestedMonads m t => Monad (Nested m t) where
 	return  = Nested . rereturn
 	x >>= f = Nested $ getNested x `bibind` (getNested . f)
 
-type Nested = (:.)
-
-tfil :: NestedMonads m t => t a -> Nested m t a
+tfil :: Monad m => t a -> Nested m t a
 tfil = Nested . return
 
-lift :: NestedMonads m t => m a -> Nested m t a
+lift :: (Monad m, Monad t) => m a -> Nested m t a
 lift = Nested . liftM return
 
 main :: IO (Maybe ())
