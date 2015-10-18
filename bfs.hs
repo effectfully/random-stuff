@@ -25,8 +25,9 @@ mergeShift  s1            (Some (x, c2)) = Some (x, mergeCrescendo (Crescendo s1
 mergeShift (Shift s1)     (Shift s2)     = Shift (mergeShift s1 s2)
 
 ifSome :: (a -> Bool) -> a -> Crescendo a -> Crescendo a
-ifSome p x c | p x       = Crescendo (Some (x, c))
-	     | otherwise = c
+ifSome p x c
+	| p x       = Crescendo (Some (x, c))
+	| otherwise = c
 
 cbfs :: (a -> Bool) -> Tree a -> Crescendo a
 cbfs p (Leaf x)     = ifSome p x (Crescendo None)
