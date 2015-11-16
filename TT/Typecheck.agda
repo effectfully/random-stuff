@@ -38,7 +38,6 @@ ValEnv = record { fresh = varᵛ zero }
 
 open Context ValCon hiding (renᵗ) public
 open module ValEnvironment = Environment ValEnv
--- open ValEnvironment using (apᵏ) public
 
 readback : ∀ {n} -> Value n -> Term n
 readback  typeᵛ    = type
