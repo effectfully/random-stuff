@@ -20,7 +20,6 @@ data Value n where
   varᵛ  : Fin n -> Value n
   lamᵛ  : Kripke n -> Value n
   _·ᵛ_  : Value n -> Value n -> Value n
-  _::ᵛ_ : Value n -> Value n -> Value n
 
 renᵛ : ∀ {n m} -> n ≤ m -> Value n -> Value m
 renᵛ ι  typeᵛ    = typeᵛ
@@ -28,7 +27,6 @@ renᵛ ι (piᵛ σ k) = piᵛ (renᵛ ι σ) (renᵏ ι k)
 renᵛ ι (varᵛ v)  = varᵛ (renᶠ ι v)
 renᵛ ι (lamᵛ k)  = lamᵛ (renᵏ ι k)
 renᵛ ι (f ·ᵛ x)  = renᵛ ι f ·ᵛ renᵛ ι x
-renᵛ ι (x ::ᵛ σ) = renᵛ ι x ::ᵛ renᵛ ι σ
 
 ValCon : Context ValIsThing
 ValCon = record { renᵗ = renᵛ }
@@ -45,7 +43,6 @@ readback (piᵛ σ k) = π (readback σ) (readback (apᵏ k))
 readback (varᵛ v)  = var v
 readback (lamᵛ k)  = ƛ (readback (apᵏ k))
 readback (f ·ᵛ x)  = readback f · readback x
-readback (x ::ᵛ σ) = readback x :: readback σ
 
 _$ᵛ_ : ∀ {n} -> Value n -> Value n -> Value n
 lamᵛ k $ᵛ x = k ·ᵏ x
@@ -57,26 +54,34 @@ f      $ᵛ x = f ·ᵛ x
 ⟦ var v  ⟧ ρ = lookupᵉ v ρ
 ⟦ ƛ b    ⟧ ρ = lamᵛ λ ι x -> ⟦ b ⟧ (renᵉ ι ρ ▷ x)
 ⟦ f · x  ⟧ ρ = ⟦ f ⟧ ρ $ᵛ ⟦ x ⟧ ρ
-⟦ x :: σ ⟧ ρ = ⟦ x ⟧ ρ ::ᵛ ⟦ σ ⟧ ρ
+⟦ x :: σ ⟧ ρ = ⟦ x ⟧ ρ
 
 eval : ∀ {n} -> Term n -> Value n
 eval t = ⟦ t ⟧ stopᵉ
 
+-- (erase ∘ readback ≗ readback)
 data _⊢_∈_ {n} Γ : Term n -> Value n -> Set where
   type⁺ : Γ ⊢ type ∈ typeᵛ
   π⁺    : ∀ {σ τ} -> Γ ⊢ σ ∈ typeᵛ -> Γ ▻ eval σ ⊢ τ ∈ typeᵛ -> Γ ⊢ π σ τ ∈ typeᵛ
   var⁺  : ∀ v -> Γ ⊢ var v ∈ lookupᶜ v Γ
   ƛ⁺    : ∀ {σ b} {k : Kripke n}
-        -> Γ ⊢ erase (readback σ) ∈ typeᵛ -> Γ ▻ σ ⊢ b ∈ apᵏ k -> Γ ⊢ (ƛ b) ∈ piᵛ σ k
+        -> Γ ⊢ erase (readback σ) ∈ typeᵛ -> Γ ▻ σ ⊢ b ∈ apᵏ k -> Γ ⊢ ƛ_ b ∈ piᵛ σ k
   _·⁺_  : ∀ {σ f x} {k : Kripke n} -> Γ ⊢ f ∈ piᵛ σ k -> Γ ⊢ x ∈ σ -> Γ ⊢ f · x ∈ k ·ᵏ eval x
+  coe⁺  : ∀ {σ τ x} -> readback σ ≡ readback τ -> Γ ⊢ x ∈ σ -> Γ ⊢ x ∈ τ
 
 module _ where
   open import Relation.Binary.PropositionalEquality.TrustMe
 
-  coerce : ∀ {n σ τ t} {Γ : Con n} -> Γ ⊢ t ∈ σ -> Maybe (Γ ⊢ t ∈ τ)
-  coerce {σ = σ} {τ} t⁺ with readback σ ≟ readback τ
-  ... | just  _ rewrite trustMe {x = σ} {y = τ} = just t⁺
-  ... | nothing = nothing
+  unsafeErase : ∀ {n σ t} {Γ : Con n} -> Γ ⊢ t ∈ σ -> Γ ⊢ t ∈ σ
+  unsafeErase  type⁺   = type⁺
+  unsafeErase (π⁺ σ τ) = π⁺ (unsafeErase σ) (unsafeErase τ)
+  unsafeErase (var⁺ v) = var⁺ v
+  unsafeErase (ƛ⁺ σ b) = ƛ⁺ (unsafeErase σ) (unsafeErase b)
+  unsafeErase (f ·⁺ x) = unsafeErase f ·⁺ unsafeErase x
+  unsafeErase (coe⁺ {σ} {τ} p t) rewrite trustMe {x = σ} {y = τ} = unsafeErase t
+
+coerce : ∀ {n σ τ t} {Γ : Con n} -> Γ ⊢ t ∈ σ -> Maybe (Γ ⊢ t ∈ τ)
+coerce {σ = σ} {τ} t⁺ = flip coe⁺ t⁺ <$> readback σ ≟ readback τ
 
 mutual
   infer : ∀ {n} (Γ : Con n) t -> Maybe (∃ λ σ -> Γ ⊢ erase t ∈ σ)
@@ -95,6 +100,7 @@ mutual
   check Γ (ƛ b) (piᵛ σ k) = ƛ⁺ <$> check Γ (readback σ) typeᵛ ⊛ check (Γ ▻ σ) b (apᵏ k)
   check Γ  t     σ        = infer Γ t >>= coerce ∘ proj₂
 
+-- Works, but consumes way more memory than the inlined version.
 typecheck = from-Maybe proj₂ ∘ infer ε
 
 infixr 4 _Π_
@@ -113,7 +119,7 @@ Aᵗ =    type
 A : Term⁺
 A = ƛ ƛ ƛ ƛ var (suc zero) · var zero :: Aᵗ
 
-Aᵀ = typecheck A
+Aᵀ = unsafeErase (proj₂ (from-just (infer ε A)))
 
 AA : Term⁽⁾
 AA = ƛ ƛ A · π (var (suc zero)) (var (suc zero) · var zero)
@@ -121,4 +127,4 @@ AA = ƛ ƛ A · π (var (suc zero)) (var (suc zero) · var zero)
            · (A · var (suc zero) · var zero) :: Aᵗ
 
 -- This is where `trustMe' fails: can't unify `ι' with (ι ∘ˡᵉ stop).
-AAᵀ = typecheck AA
+AAᵀ = proj₂ (from-just (infer ε AA))
