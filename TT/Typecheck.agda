@@ -121,5 +121,5 @@ AA = ƛ ƛ A · π (var (suc zero)) (var (suc zero) · var zero)
            · (ƛ (π (var (suc (suc zero))) (var (suc (suc zero)) · var zero)))
            · (A · var (suc zero) · var zero) :: Aᵗ
 
--- This is where `trustMe` fails: can't unify `ι' with (ι ∘ˡᵉ stop).
+-- This is where `trustMe' fails: can't unify `ι' with (ι ∘ˡᵉ stop).
 AAᵀ = typecheck AA
