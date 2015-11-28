@@ -119,11 +119,11 @@ coherenceUniv : ∀ {α β} -> (p : ⟦ α ≟ₙ β ⟧ᵀ) -> (A : Univ α) ->
 coherenceUniv = coherenceUniv+ id
 
 coherence {A = bot    } {bot    } P ()
-coherence {A = top    } {top    } P _  = _
-coherence {A = univ α } {univ β } P A  = coherenceUniv P A
-coherence {A = σ A₁ B₁} {σ A₂ B₂} P p  = let P₁ , P₂ = P ; x , y = p in
+coherence {A = top    } {top    } P _ = _
+coherence {A = univ α } {univ β } P A = coherenceUniv P A
+coherence {A = σ A₁ B₁} {σ A₂ B₂} P p = let P₁ , P₂ = P ; x , y = p in
   coherence P₁ x , coherence (P₂ x (coerce P₁ x) (coherence P₁ x)) y
-coherence {A = π A₁ B₁} {π A₂ B₂} P f  = let P₁ , P₂ = P in
+coherence {A = π A₁ B₁} {π A₂ B₂} P f = let P₁ , P₂ = P in
   P₁ , λ x -> coherence (P₂ x) (f (coerce P₁ x))
 coherence {A = bot   } {top   } ()
 coherence {A = bot   } {univ _} ()
