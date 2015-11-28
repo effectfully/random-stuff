@@ -62,16 +62,15 @@ mutual
   _≅_ {A = bot    } {bot    } _  _  = top
   _≅_ {A = top    } {top    } _  _  = top
   _≅_ {A = univ α } {univ β } u₁ u₂ = u₁ ≃ u₂
-  _≅_ {A = σ A₁ B₁} {σ A₂ B₂} p₁ p₂ = let (x₁ , y₁) , (x₂ , y₂) = p₁ , p₂ in
-    σ (x₁ ≅ x₂) λ _ -> y₁ ≅ y₂
+  _≅_ {A = σ A₁ B₁} {σ A₂ B₂} p₁ p₂ = let x₁ , y₁ = p₁ ; x₂ , y₂ = p₂ in x₁ ≅ x₂ & y₁ ≅ y₂
   _≅_ {A = π A₁ B₁} {π A₂ B₂} f₁ f₂ = π _ λ x₁ -> π _ λ x₂ -> x₁ ≅ x₂ ⇒ f₁ x₁ ≅ f₂ x₂
-  x ≅ y = bot
+  _≅_                         _  _  = bot
 
 coerceUnivᵏ : ∀ {α β} -> (k : ℕ -> ℕ) -> ⟦ α ≟ₙ β ⟧ᵀ -> Univ (k α) -> Univ (k β)
-coerceUnivᵏ {0}     {0}     k P  A = A
-coerceUnivᵏ {suc α} {suc β} k P  A = coerceUnivᵏ (k ∘ suc) P A
-coerceUnivᵏ {0}     {suc _} k () A
-coerceUnivᵏ {suc _} {0}     k () A
+coerceUnivᵏ {0}     {0}     k r A = A
+coerceUnivᵏ {suc α} {suc β} k r A = coerceUnivᵏ (k ∘ suc) r A
+coerceUnivᵏ {0}     {suc _} k ()
+coerceUnivᵏ {suc _} {0}     k ()
 
 coerceUniv : ∀ {α β} -> ⟦ α ≟ₙ β ⟧ᵀ -> Univ α -> Univ β
 coerceUniv = coerceUnivᵏ id
