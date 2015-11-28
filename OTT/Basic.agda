@@ -24,7 +24,7 @@ mutual
   data Univ : ℕ -> Set where
     bot  : Prop
     top  : Prop
-    univ : ∀ α -> Univ (suc α)
+    univ : ∀ α -> Type α
     σ    : ∀ {α β} -> (A : Univ α) -> (⟦ A ⟧ᵀ -> Univ β) -> Univ (α ⊔  β)
     π    : ∀ {α β} -> (A : Univ α) -> (⟦ A ⟧ᵀ -> Univ β) -> Univ (α ⊔₀ β)
 
