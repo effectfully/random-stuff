@@ -110,8 +110,8 @@ postulate
 
 coherenceUniv+ : ∀ {α β}
                -> (k : ℕ -> ℕ) -> (r : ⟦ α ≟ₙ β ⟧ᵀ) -> (A : Univ (k α)) -> ⟦ A ≃ coerceUniv+ k r A ⟧ᵀ
-coherenceUniv+ {0}     {0}     k r  A = ≃-refl A
-coherenceUniv+ {suc α} {suc β} k r  A = coherenceUniv+ (k ∘ suc) r A
+coherenceUniv+ {0}     {0}     k r A = ≃-refl A
+coherenceUniv+ {suc α} {suc β} k r A = coherenceUniv+ (k ∘ suc) r A
 coherenceUniv+ {0}     {suc _} k ()
 coherenceUniv+ {suc _} {0}     k ()
 
