@@ -101,19 +101,18 @@ mutual
     coerce P₁ x , coerce (P₂ x (coerce P₁ x) (coherence P₁ x)) y
   coerce {suc α} {A = π′ A₁ B₁} {π′ A₂ B₂} P f = let P₁ , P₂ = P in λ x ->
     coerce (P₂ (coerce P₁ x) x (coherence P₁ x)) (f (coerce P₁ x))
-
-  coerce {suc α} {A = univ _ } {bot    } ()
-  coerce {suc α} {A = univ _ } {top    } ()
-  coerce {suc α} {A = univ _ } {σ′ _ _ } ()
-  coerce {suc α} {A = univ _ } {π′ _ _ } ()
-  coerce {suc α} {A = σ′ _ _ } {bot    } ()
-  coerce {suc α} {A = σ′ _ _ } {top    } ()
-  coerce {suc α} {A = σ′ _ _ } {univ _ } ()
-  coerce {suc α} {A = σ′ _ _ } {π′ _ _ } ()
-  coerce {suc α} {A = π′ _ _ } {bot    } ()
-  coerce {suc α} {A = π′ _ _ } {top    } ()
-  coerce {suc α} {A = π′ _ _ } {univ _ } ()
-  coerce {suc α} {A = π′ _ _ } {σ′ _ _ } ()
+  coerce {suc α} {A = univ _} {bot   } ()
+  coerce {suc α} {A = univ _} {top   } ()
+  coerce {suc α} {A = univ _} {σ′ _ _} ()
+  coerce {suc α} {A = univ _} {π′ _ _} ()
+  coerce {suc α} {A = σ′ _ _} {bot   } ()
+  coerce {suc α} {A = σ′ _ _} {top   } ()
+  coerce {suc α} {A = σ′ _ _} {univ _} ()
+  coerce {suc α} {A = σ′ _ _} {π′ _ _} ()
+  coerce {suc α} {A = π′ _ _} {bot   } ()
+  coerce {suc α} {A = π′ _ _} {top   } ()
+  coerce {suc α} {A = π′ _ _} {univ _} ()
+  coerce {suc α} {A = π′ _ _} {σ′ _ _} ()
 
   postulate
     coherence : ∀ {α β} {A : Univ α} {B : Univ β}
