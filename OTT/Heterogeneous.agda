@@ -1,14 +1,12 @@
 {-# OPTIONS --no-positivity-check #-}
 
-open import Function public
-open import Relation.Nullary public
-open import Relation.Binary  public
-open import Relation.Binary.PropositionalEquality public
-open import Data.Empty public
-open import Data.Nat.Base public
-open import Data.Nat.Properties public
-open import Data.Fin using (Fin; zero; suc) public
-open import Data.Product public
+open import Function
+open import Relation.Nullary
+open import Relation.Binary.PropositionalEquality
+open import Data.Empty
+open import Data.Nat.Base
+open import Data.Fin using (Fin; zero; suc)
+open import Data.Product
 
 infix 3 _≃_ _≅_[_]
 
@@ -81,7 +79,7 @@ type-inj t≃t = refl
 
 π-inj : ∀ {α₁ α₂ β₁ β₂} {A₁ : Type α₁} {A₂ : Type α₂}
             {B₁ : ⟦ A₁ ⟧ᵀ -> Type β₁} {B₂ : ⟦ A₂ ⟧ᵀ -> Type β₂}
-        -> π A₁ B₁ ≃ π A₂ B₂ -> Σ (A₂ ≃ A₁) λ P -> ∀ {x} -> B₁ (coerce P x) ≃ B₂ x
+      -> π A₁ B₁ ≃ π A₂ B₂ -> Σ (A₂ ≃ A₁) λ P -> ∀ {x} -> B₁ (coerce P x) ≃ B₂ x
 π-inj (π≃π P Q) = P , Q
 
 coerce {A = fin n  } {fin m  } P i = dsubst Fin  (n ≟ m) i (λ c -> ⊥-elim (c (fin-inj  P)))
