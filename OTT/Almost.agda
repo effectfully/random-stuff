@@ -2,7 +2,7 @@
 
 open import Function
 open import Data.Empty
-open import Data.Unit.Base
+open import Data.Unit.Base hiding (_≤_)
 open import Data.Nat.Base
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Product
@@ -25,16 +25,16 @@ mutual
     bot  : Prop
     top  : Prop
     univ : ∀ α -> Type α
-    σ    : ∀ {α β} -> (A : Univ α) -> (⟦ A ⟧ᵀ -> Univ β) -> Univ (α ⊔  β)
-    π    : ∀ {α β} -> (A : Univ α) -> (⟦ A ⟧ᵀ -> Univ β) -> Univ (α ⊔₀ β)
+    σ    : ∀ {α β} -> (A : Univ α) -> (⟦ A ⟧ -> Univ β) -> Univ (α ⊔  β)
+    π    : ∀ {α β} -> (A : Univ α) -> (⟦ A ⟧ -> Univ β) -> Univ (α ⊔₀ β)
 
-  ⟦_⟧ᵀ : ∀ {α} -> Univ α -> Set
-  ⟦ bot    ⟧ᵀ = ⊥
-  ⟦ top    ⟧ᵀ = ⊤
-  ⟦ univ α ⟧ᵀ = Univ α
-  ⟦ σ A B  ⟧ᵀ = Σ ⟦ A ⟧ᵀ λ x -> ⟦ B x ⟧ᵀ
-  ⟦ π A B  ⟧ᵀ = (x : ⟦ A ⟧ᵀ) -> ⟦ B x ⟧ᵀ 
-
+  ⟦_⟧ : ∀ {α} -> Univ α -> Set
+  ⟦ bot    ⟧ = ⊥
+  ⟦ top    ⟧ = ⊤
+  ⟦ univ α ⟧ = Univ α
+  ⟦ σ A B  ⟧ = Σ ⟦ A ⟧ λ x -> ⟦ B x ⟧
+  ⟦ π A B  ⟧ = (x : ⟦ A ⟧) -> ⟦ B x ⟧
+  
 prop = univ 0
 type = univ ∘ suc
 
@@ -50,10 +50,10 @@ suc n ≟ₙ suc m = n ≟ₙ m
 _     ≟ₙ _     = bot
 
 _≃_ : ∀ {α β} -> Univ α -> Univ β -> Prop
-_≅_ : ∀ {α β} {A : Univ α} {B : Univ β} -> ⟦ A ⟧ᵀ -> ⟦ B ⟧ᵀ -> Prop
-coerce : ∀ {α β} {A : Univ α} {B : Univ β} -> ⟦ A ≃ B ⟧ᵀ -> ⟦ A ⟧ᵀ -> ⟦ B ⟧ᵀ
+_≅_ : ∀ {α β} {A : Univ α} {B : Univ β} -> ⟦ A ⟧ -> ⟦ B ⟧ -> Prop
+coerce : ∀ {α β} {A : Univ α} {B : Univ β} -> ⟦ A ≃ B ⟧ -> ⟦ A ⟧ -> ⟦ B ⟧
 coherence : ∀ {α β} {A : Univ α} {B : Univ β}
-          -> (P : ⟦ A ≃ B ⟧ᵀ) -> (x : ⟦ A ⟧ᵀ) -> ⟦ x ≅ coerce P x ⟧ᵀ
+          -> (P : ⟦ A ≃ B ⟧) -> (x : ⟦ A ⟧) -> ⟦ x ≅ coerce P x ⟧
 
 bot     ≃ bot     = top
 top     ≃ top     = top
@@ -69,13 +69,13 @@ _≅_ {A = σ A₁ B₁} {σ A₂ B₂} p₁ p₂ = let (x₁ , y₁) , (x₂ , 
 _≅_ {A = π A₁ B₁} {π A₂ B₂} f₁ f₂ = σ (A₂ ≃ A₁) λ P -> π _ λ x -> f₁ (coerce P x) ≅ f₂ x
 _≅_                         _  _  = bot 
 
-coerceUniv+ : ∀ {α β} -> (k : ℕ -> ℕ) -> ⟦ α ≟ₙ β ⟧ᵀ -> Univ (k α) -> Univ (k β)
+coerceUniv+ : ∀ {α β} -> (k : ℕ -> ℕ) -> ⟦ α ≟ₙ β ⟧ -> Univ (k α) -> Univ (k β)
 coerceUniv+ {0}     {0}     k r A = A
 coerceUniv+ {suc α} {suc β} k r A = coerceUniv+ (k ∘ suc) r A
 coerceUniv+ {0}     {suc _} k ()
 coerceUniv+ {suc _} {0}     k ()
 
-coerceUniv : ∀ {α β} -> ⟦ α ≟ₙ β ⟧ᵀ -> Univ α -> Univ β
+coerceUniv : ∀ {α β} -> ⟦ α ≟ₙ β ⟧ -> Univ α -> Univ β
 coerceUniv = coerceUniv+ id
 
 coerce {A = bot    } {bot    } P ()
@@ -105,17 +105,16 @@ coerce {A = π _ _ } {top   } ()
 coerce {A = π _ _ } {univ _} ()
 coerce {A = π _ _ } {σ _ _ } ()
 
-postulate
-  ≃-refl : ∀ {α} -> (A : Univ α) -> ⟦ A ≃ A ⟧ᵀ
+postulate ≃-refl : ∀ {α} -> (A : Univ α) -> ⟦ A ≃ A ⟧
 
 coherenceUniv+ : ∀ {α β}
-               -> (k : ℕ -> ℕ) -> (r : ⟦ α ≟ₙ β ⟧ᵀ) -> (A : Univ (k α)) -> ⟦ A ≃ coerceUniv+ k r A ⟧ᵀ
+               -> (k : ℕ -> ℕ) -> (r : ⟦ α ≟ₙ β ⟧) -> (A : Univ (k α)) -> ⟦ A ≃ coerceUniv+ k r A ⟧
 coherenceUniv+ {0}     {0}     k r A = ≃-refl A
 coherenceUniv+ {suc α} {suc β} k r A = coherenceUniv+ (k ∘ suc) r A
 coherenceUniv+ {0}     {suc _} k ()
 coherenceUniv+ {suc _} {0}     k ()
 
-coherenceUniv : ∀ {α β} -> (p : ⟦ α ≟ₙ β ⟧ᵀ) -> (A : Univ α) -> ⟦ A ≃ coerceUniv p A ⟧ᵀ
+coherenceUniv : ∀ {α β} -> (p : ⟦ α ≟ₙ β ⟧) -> (A : Univ α) -> ⟦ A ≃ coerceUniv p A ⟧
 coherenceUniv = coherenceUniv+ id
 
 coherence {A = bot    } {bot    } P ()
@@ -145,3 +144,6 @@ coherence {A = π _ _ } {bot   } ()
 coherence {A = π _ _ } {top   } ()
 coherence {A = π _ _ } {univ _} ()
 coherence {A = π _ _ } {σ _ _ } ()
+
+esubst : ∀ {α π} {A : Univ α} {x y} -> (P : ⟦ A ⟧ -> Univ π) -> ⟦ x ≅ y ⟧ -> ⟦ P x ⟧ -> ⟦ P y ⟧
+esubst P _ = coerce whoCares where postulate whoCares : _
