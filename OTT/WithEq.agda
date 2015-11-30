@@ -115,6 +115,7 @@ mutual
   coerce : ∀ {α β} {A : Univ α} {B : Univ β} -> ⟦ A ≃ B ⟧ -> ⟦ A ⟧ -> ⟦ B ⟧
   coerce {A = bot    } {bot    } P ()
   coerce {A = top    } {top    } P _ = _
+  -- Oops?
   coerce {A = A₁ ≈ B₁} {A₂ ≈ B₂} P p = let q₁ , q₂ = P in q₁ ⌈ p ⌉ q₂
   coerce {A = univ α } {univ β } P A = coerceUniv P A
   coerce {A = σ A₁ B₁} {σ A₂ B₂} P p = let P₁ , P₂ = P; x , y = p in
