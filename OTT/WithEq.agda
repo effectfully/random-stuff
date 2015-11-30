@@ -58,9 +58,6 @@ mutual
     σ    : ∀ {α β} -> (A : Univ α) -> (⟦ A ⟧ -> Univ β) -> Univ (α ⊔  β)
     π    : ∀ {α β} -> (A : Univ α) -> (⟦ A ⟧ -> Univ β) -> Univ (α ⊔₀ β)
 
-  univOf : ∀ {α} -> Univ α -> ℕ
-  univOf {α} _ = α
-
   ⟦_⟧ : ∀ {α} -> Univ α -> Set
   ⟦ bot    ⟧ = ⊥
   ⟦ top    ⟧ = ⊤
@@ -68,7 +65,7 @@ mutual
   ⟦ univ α ⟧ = Univ α
   ⟦ σ A B  ⟧ = Σ ⟦ A ⟧ λ x -> ⟦ B x ⟧
   ⟦ π A B  ⟧ = (x : ⟦ A ⟧) -> ⟦ B x ⟧
-  
+
 prop = univ 0
 type = univ ∘ suc
 
@@ -89,7 +86,7 @@ mutual
   top     ≃ top     = top
   A₁ ≈ B₁ ≃ A₂ ≈ B₂ = A₁ ≈ A₂ & B₁ ≈ B₂
   univ α  ≃ univ β  = α ≟ₙ β
-  σ A₁ B₁ ≃ σ A₂ B₂ = A₁ ≃ A₂ & π _ λ x₁ -> π _ λ x₂ -> x₁ ≊ x₂ ⇒ B₁ x₁ ≃ B₂ x₂
+  σ A₁ B₁ ≃ σ A₂ B₂ = (A₁ ≃ A₂) & π _ λ x₁ -> π _ λ x₂ -> x₁ ≊ x₂ ⇒ B₁ x₁ ≃ B₂ x₂
   π A₁ B₁ ≃ π A₂ B₂ = σ (A₂ ≈ A₁) λ P -> π _ λ x -> B₁ (coerceBy P x) ≃ B₂ x
   _       ≃ _       = bot
 
@@ -111,6 +108,7 @@ coerceUniv+ {suc _} {0}     k ()
 coerceUniv : ∀ {α β} -> ⟦ α ≟ₙ β ⟧ -> Univ α -> Univ β
 coerceUniv = coerceUniv+ id
 
+-- Just for fun. We don't really need more than `≃-refl'.
 postulate univalence : ∀ {α β} -> (A : Univ α) -> (B : Univ β) -> ⟦ (A ≈ B) ≃ (A ≃ B) ⟧
 
 mutual
@@ -119,7 +117,7 @@ mutual
   coerce {A = top    } {top    } P _ = _
   coerce {A = A₁ ≈ B₁} {A₂ ≈ B₂} P p = let q₁ , q₂ = P in q₁ ⌈ p ⌉ q₂
   coerce {A = univ α } {univ β } P A = coerceUniv P A
-  coerce {A = σ A₁ B₁} {σ A₂ B₂} P p = let P₁ , P₂ = P; x , y  = p in
+  coerce {A = σ A₁ B₁} {σ A₂ B₂} P p = let P₁ , P₂ = P; x , y = p in
     coerce P₁ x , coerce (P₂ x (coerce P₁ x) (coherence P₁ x)) y
   coerce {A = π A₁ B₁} {π A₂ B₂} P f = let P₁ , P₂ = P in λ x -> coerce (P₂ x) (f (coerceBy P₁ x))
   coerce {A = bot   } {top   } ()
@@ -155,7 +153,7 @@ mutual
 
   coherenceUniv+ : ∀ {α β}
                  -> (k : ℕ -> ℕ) -> (r : ⟦ α ≟ₙ β ⟧) -> (A : Univ (k α)) -> ⟦ A ≃ coerceUniv+ k r A ⟧
-  coherenceUniv+ {0}     {0}     k r A = coerce (univalence A A) irefl 
+  coherenceUniv+ {0}     {0}     k r A = coerce (univalence A A) irefl
   coherenceUniv+ {suc α} {suc β} k r A = coherenceUniv+ (k ∘ suc) r A
   coherenceUniv+ {0}     {suc _} k ()
   coherenceUniv+ {suc _} {0}     k ()
@@ -203,3 +201,6 @@ mutual
   coherence {A = π _ _ } {_ ≈ _ } ()
   coherence {A = π _ _ } {univ _} ()
   coherence {A = π _ _ } {σ _ _ } ()
+
+esubst : ∀ {α π} {A : Univ α} {x y} -> (P : ⟦ A ⟧ -> Univ π) -> ⟦ x ≊ y ⟧ -> ⟦ P x ⟧ -> ⟦ P y ⟧
+esubst P _ = coerce whoCares where postulate whoCares : _
