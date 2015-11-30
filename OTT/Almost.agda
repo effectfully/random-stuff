@@ -145,5 +145,7 @@ coherence {A = π _ _ } {top   } ()
 coherence {A = π _ _ } {univ _} ()
 coherence {A = π _ _ } {σ _ _ } ()
 
+postulate substitutive : ∀ {α π} {A : Univ α} {x y} -> (P : ⟦ A ⟧ -> Univ π) -> ⟦ x ≅ y ⇒ P x ≃ P y ⟧
+
 esubst : ∀ {α π} {A : Univ α} {x y} -> (P : ⟦ A ⟧ -> Univ π) -> ⟦ x ≅ y ⇒ P x ⇒ P y ⟧
-esubst P _ = coerce whoCares where postulate whoCares : _
+esubst P p = coerce (substitutive P p)
