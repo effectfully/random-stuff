@@ -10,8 +10,8 @@ open import Data.Product
 infixl 6 _⊔₀_
 infix  3 _≃_ _≅_
 infix  5 _≟ₙ_
-infix  1 _&_
-infix  2 _⇒_
+infixl 1 _&_
+infixr 2 _⇒_
 
 _⊔₀_ : ℕ -> ℕ -> ℕ
 α ⊔₀ 0 = 0
@@ -145,5 +145,5 @@ coherence {A = π _ _ } {top   } ()
 coherence {A = π _ _ } {univ _} ()
 coherence {A = π _ _ } {σ _ _ } ()
 
-esubst : ∀ {α π} {A : Univ α} {x y} -> (P : ⟦ A ⟧ -> Univ π) -> ⟦ x ≅ y ⟧ -> ⟦ P x ⟧ -> ⟦ P y ⟧
+esubst : ∀ {α π} {A : Univ α} {x y} -> (P : ⟦ A ⟧ -> Univ π) -> ⟦ x ≅ y ⇒ P x ⇒ P y ⟧
 esubst P _ = coerce whoCares where postulate whoCares : _
