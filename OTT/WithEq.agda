@@ -2,7 +2,7 @@
 
 open import Function hiding (_⟨_⟩_)
 open import Data.Empty
-open import Data.Unit.Base hiding (_≤_)
+open import Data.Unit.Base
 open import Data.Nat.Base
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Product
