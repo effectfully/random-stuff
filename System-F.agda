@@ -1,102 +1,125 @@
-infixr 6 _⇒ᵏ_ _⇒_
-infixl 5 _▻ᵏ_
-infix  3 _⊆ᵏ_ _∈ᵗ_ _∈_ _⊢ᵗ_ _⊢ᵗᵉ_ _⊢_
+open import Level
+
+infixr 6 _⇒_
+infix  3 _⊢ᵗ_ _⊢_
 infixl 6 _·ᵗ_ _·_
 infixl 9 _[_]ᵗ _[_]
 infixr 5 Λ_ ƛ_
 
+module Context {α} (A : Set α) where
+  infixl 5 _▻_
+
+  data Con : Set α where
+    ε   : Con
+    _▻_ : Con -> A -> Con
+
+module _ where
+  open Context
+
+  mapᶜ : ∀ {α β} {A : Set α} {B : Set β} -> (A -> B) -> Con A -> Con B
+  mapᶜ f  ε      = ε
+  mapᶜ f (Γ ▻ x) = mapᶜ f Γ ▻ f x
+
+module _ {α} {A : Set α} where
+  infix 3 _⊆_ _∈_
+
+  open Context A
+
+  data _⊆_ : Con -> Con -> Set where
+    stop : ε ⊆ ε
+    skip : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Γ     ⊆ Δ ▻ σ
+    keep : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Γ ▻ σ ⊆ Δ ▻ σ
+
+  data _∈_ σ : Con -> Set where
+    vz  : ∀ {Γ}   -> σ ∈ Γ ▻ σ
+    vs_ : ∀ {Γ τ} -> σ ∈ Γ     -> σ ∈ Γ ▻ τ
+
+  id : ∀ {Γ} -> Γ ⊆ Γ
+  id {ε}     = stop
+  id {Γ ▻ σ} = keep id
+
+  top : ∀ {Γ σ} -> Γ ⊆ Γ ▻ σ
+  top = skip id
+
+  renᵛ : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> σ ∈ Γ -> σ ∈ Δ
+  renᵛ  stop     ()
+  renᵛ (skip ι)  v     = vs (renᵛ ι v)
+  renᵛ (keep ι)  vz    = vz
+  renᵛ (keep ι) (vs v) = vs (renᵛ ι v)
+
+  record Environment {β} (_∙_ : Con -> A -> Set β) : Set (α ⊔ β) where
+    infix 3 _⊢ᵉ_
+
+    field
+      renᶠ   : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Γ ∙ σ -> Δ ∙ σ
+      freshᶠ : ∀ {Γ σ} -> (Γ ▻ σ) ∙ σ
+
+    data _⊢ᵉ_ Δ : Con -> Set β where
+      Ø   : Δ ⊢ᵉ ε
+      _▷_ : ∀ {Γ σ} -> Δ ⊢ᵉ Γ -> Δ ∙ σ -> Δ ⊢ᵉ Γ ▻ σ
+
+    lookupᵉ : ∀ {Δ Γ σ} -> σ ∈ Γ -> Δ ⊢ᵉ Γ -> Δ ∙ σ
+    lookupᵉ  vz    (ρ ▷ t) = t
+    lookupᵉ (vs v) (ρ ▷ t) = lookupᵉ v ρ
+
+    renᵉ : ∀ {Δ Ξ Γ} -> Δ ⊆ Ξ -> Δ ⊢ᵉ Γ -> Ξ ⊢ᵉ Γ
+    renᵉ ι  Ø      = Ø
+    renᵉ ι (ρ ▷ t) = renᵉ ι ρ ▷ renᶠ ι t
+
+    keepᵉ : ∀ {Δ Γ σ} -> Δ ⊢ᵉ Γ -> Δ ▻ σ ⊢ᵉ Γ ▻ σ
+    keepᵉ ρ = renᵉ top ρ ▷ freshᶠ
+
+    idᵉ : ∀ {Γ} -> Γ ⊢ᵉ Γ
+    idᵉ {ε}     = Ø
+    idᵉ {Γ ▻ σ} = keepᵉ idᵉ
+
+    topᵉ : ∀ {Γ σ} -> Γ ∙ σ -> Γ ⊢ᵉ Γ ▻ σ
+    topᵉ t = idᵉ ▷ t
+
 data Kind : Set where
-  ⋆    : Kind
-  _⇒ᵏ_ : Kind -> Kind -> Kind
+  ⋆   : Kind
+  _⇒_ : Kind -> Kind -> Kind
 
-data Conᵏ : Set where
-  εᵏ   : Conᵏ
-  _▻ᵏ_ : Conᵏ -> Kind -> Conᵏ
-
-data _⊆ᵏ_ : Conᵏ -> Conᵏ -> Set where
-  stopᵏ : εᵏ ⊆ᵏ εᵏ
-  skipᵏ : ∀ {Θ Ξ σ} -> Θ ⊆ᵏ Ξ -> Θ      ⊆ᵏ Ξ ▻ᵏ σ
-  keepᵏ : ∀ {Θ Ξ σ} -> Θ ⊆ᵏ Ξ -> Θ ▻ᵏ σ ⊆ᵏ Ξ ▻ᵏ σ
-
-data _∈ᵗ_ σ : Conᵏ -> Set where
-  vzᵗ  : ∀ {Θ}   -> σ ∈ᵗ Θ ▻ᵏ σ
-  vsᵗ_ : ∀ {Θ τ} -> σ ∈ᵗ Θ      -> σ ∈ᵗ Θ ▻ᵏ τ
+open Context Kind renaming (Con to KindCon; ε to ε̂ᵏ; _▻_ to _▻ᵏ_)
 
 mutual
-  Type : Conᵏ -> Set
+  Type : KindCon -> Set
   Type Θ = Θ ⊢ᵗ ⋆
 
   -- No type-level lambdas.
   data _⊢ᵗ_ Θ : Kind -> Set where
-    Var  : ∀ {σ} -> σ ∈ᵗ Θ -> Θ ⊢ᵗ σ
-    _·ᵗ_ : ∀ {σ τ} -> Θ ⊢ᵗ σ ⇒ᵏ τ -> Θ ⊢ᵗ σ -> Θ ⊢ᵗ τ
+    Var  : ∀ {σ} -> σ ∈ Θ -> Θ ⊢ᵗ σ
+    _·ᵗ_ : ∀ {σ τ} -> Θ ⊢ᵗ σ ⇒ τ -> Θ ⊢ᵗ σ -> Θ ⊢ᵗ τ
     _⇒_  : Type Θ -> Type Θ -> Type Θ
     π    : ∀ σ -> Type (Θ ▻ᵏ σ) -> Type Θ
 
-idᵏ : ∀ {Θ} -> Θ ⊆ᵏ Θ
-idᵏ {εᵏ}     = stopᵏ
-idᵏ {Θ ▻ᵏ σ} = keepᵏ idᵏ
-
-topᵏ : ∀ {Θ σ} -> Θ ⊆ᵏ Θ ▻ᵏ σ
-topᵏ = skipᵏ idᵏ
-
-renᵗᵛ : ∀ {Θ Ξ σ} -> Θ ⊆ᵏ Ξ -> σ ∈ᵗ Θ -> σ ∈ᵗ Ξ
-renᵗᵛ  stopᵏ     ()
-renᵗᵛ (skipᵏ ι)  v      = vsᵗ (renᵗᵛ ι v)
-renᵗᵛ (keepᵏ ι)  vzᵗ    = vzᵗ
-renᵗᵛ (keepᵏ ι) (vsᵗ v) = vsᵗ (renᵗᵛ ι v)
-
-renᵗ : ∀ {Θ Ξ σ} -> Θ ⊆ᵏ Ξ -> Θ ⊢ᵗ σ -> Ξ ⊢ᵗ σ
-renᵗ ι (Var v)  = Var (renᵗᵛ ι v)
+renᵗ : ∀ {Θ Ξ σ} -> Θ ⊆ Ξ -> Θ ⊢ᵗ σ -> Ξ ⊢ᵗ σ
+renᵗ ι (Var v)  = Var (renᵛ ι v)
 renᵗ ι (f ·ᵗ α) = renᵗ ι f ·ᵗ renᵗ ι α
 renᵗ ι (α ⇒ β)  = renᵗ ι α ⇒ renᵗ ι β
-renᵗ ι (π σ α)  = π σ (renᵗ (keepᵏ ι) α)
+renᵗ ι (π σ α)  = π σ (renᵗ (keep ι) α)
 
-data _⊢ᵗᵉ_ Ξ : Conᵏ -> Set where
-  Øᵗ   : Ξ ⊢ᵗᵉ εᵏ
-  _▷ᵗ_ : ∀ {Θ σ} -> Ξ ⊢ᵗᵉ Θ -> Ξ ⊢ᵗ σ -> Ξ ⊢ᵗᵉ Θ ▻ᵏ σ
+shiftᵗ : ∀ {Θ σ τ} -> Θ ⊢ᵗ σ -> Θ ▻ᵏ τ ⊢ᵗ σ
+shiftᵗ = renᵗ top
 
-lookupᵗᵉ : ∀ {Ξ Θ σ} -> σ ∈ᵗ Θ -> Ξ ⊢ᵗᵉ Θ -> Ξ ⊢ᵗ σ
-lookupᵗᵉ  vzᵗ    (ρ ▷ᵗ α) = α
-lookupᵗᵉ (vsᵗ v) (ρ ▷ᵗ α) = lookupᵗᵉ v ρ
+open Environment record
+  { renᶠ   = renᵗ
+  ; freshᶠ = Var vz
+  }
 
-renᵗᵉ : ∀ {Ξ Ω Θ} -> Ξ ⊆ᵏ Ω -> Ξ ⊢ᵗᵉ Θ -> Ω ⊢ᵗᵉ Θ
-renᵗᵉ ι  Øᵗ      = Øᵗ
-renᵗᵉ ι (ρ ▷ᵗ α) = renᵗᵉ ι ρ ▷ᵗ renᵗ ι α
-
-keepᵗᵉ : ∀ {Ξ Θ σ} -> Ξ ⊢ᵗᵉ Θ -> Ξ ▻ᵏ σ ⊢ᵗᵉ Θ ▻ᵏ σ
-keepᵗᵉ ρ = renᵗᵉ topᵏ ρ ▷ᵗ Var vzᵗ
-
-idᵗᵉ : ∀ {Θ} -> Θ ⊢ᵗᵉ Θ
-idᵗᵉ {εᵏ}     = Øᵗ
-idᵗᵉ {Θ ▻ᵏ σ} = keepᵗᵉ idᵗᵉ
-
-topᵗᵉ : ∀ {Θ σ} -> Θ ⊢ᵗ σ -> Θ ⊢ᵗᵉ Θ ▻ᵏ σ
-topᵗᵉ α = idᵗᵉ ▷ᵗ α
-
-subᵗ : ∀ {Ξ Θ σ} -> Ξ ⊢ᵗᵉ Θ -> Θ ⊢ᵗ σ -> Ξ ⊢ᵗ σ
-subᵗ ρ (Var v)  = lookupᵗᵉ v ρ
+subᵗ : ∀ {Ξ Θ σ} -> Ξ ⊢ᵉ Θ -> Θ ⊢ᵗ σ -> Ξ ⊢ᵗ σ
+subᵗ ρ (Var v)  = lookupᵉ v ρ
 subᵗ ρ (f ·ᵗ α) = subᵗ ρ f ·ᵗ subᵗ ρ α
 subᵗ ρ (α ⇒ β)  = subᵗ ρ α ⇒ subᵗ ρ β
-subᵗ ρ (π σ α)  = π σ (subᵗ (keepᵗᵉ ρ) α)
+subᵗ ρ (π σ α)  = π σ (subᵗ (keepᵉ ρ) α)
 
 _[_]ᵗ : ∀ {Θ σ τ} -> Θ ▻ᵏ σ ⊢ᵗ τ -> Θ ⊢ᵗ σ -> Θ ⊢ᵗ τ
-β [ α ]ᵗ = subᵗ (topᵗᵉ α) β
+β [ α ]ᵗ = subᵗ (topᵉ α) β
 
-data Con Θ : Set where
-  ε   : Con Θ
-  _▻_ : Con Θ -> Type Θ -> Con Θ
-
-renᶜ : ∀ {Θ Ξ} -> Θ ⊆ᵏ Ξ -> Con Θ -> Con Ξ
-renᶜ ι  ε      = ε
-renᶜ ι (Γ ▻ α) = renᶜ ι Γ ▻ renᵗ ι α
+open module TypeCon Θ = Context (Type Θ)
 
 shiftᶜ : ∀ {Θ σ} -> Con Θ -> Con (Θ ▻ᵏ σ)
-shiftᶜ = renᶜ topᵏ
-
-data _∈_ {Θ} α : Con Θ -> Set where
-  vz  : ∀ {Γ}   -> α ∈ Γ ▻ α
-  vs_ : ∀ {Γ β} -> α ∈ Γ     -> α ∈ Γ ▻ β
+shiftᶜ = mapᶜ shiftᵗ
 
 data _⊢_ {Θ} Γ : Type Θ -> Set where
   var  : ∀ {α}   -> α ∈ Γ -> Γ ⊢ α
@@ -112,25 +135,25 @@ Term⁺ : Type⁺ -> Set
 Term⁺ α = ∀ {Θ} {Γ : Con Θ} -> Γ ⊢ α
 
 Iᵀ : Type⁺
-Iᵀ = π ⋆ (Var vzᵗ ⇒ Var vzᵗ)
+Iᵀ = π ⋆ (Var vz ⇒ Var vz)
 
 I : Term⁺ Iᵀ
-I = Λ ƛ (var vz)
+I = Λ ƛ var vz
 
 I·I : Term⁺ Iᵀ
 I·I = I [ Iᵀ ] · I
 
-K : Term⁺ (π ⋆ (π ⋆ (Var (vsᵗ vzᵗ) ⇒ Var vzᵗ ⇒ Var (vsᵗ vzᵗ))))
+K : Term⁺ (π ⋆ (π ⋆ (Var (vs vz) ⇒ Var vz ⇒ Var (vs vz))))
 K = Λ Λ ƛ ƛ var (vs vz)
 
 S : Term⁺ (π ⋆ (π ⋆ (π ⋆
-      (  (Var (vsᵗ vsᵗ vzᵗ) ⇒ Var (vsᵗ vzᵗ) ⇒ Var vzᵗ)
-       ⇒ (Var (vsᵗ vsᵗ vzᵗ) ⇒ Var (vsᵗ vzᵗ))
-       ⇒  Var (vsᵗ vsᵗ vzᵗ)
-       ⇒  Var vzᵗ))))
+      (  (Var (vs vs vz) ⇒ Var (vs vz) ⇒ Var vz)
+       ⇒ (Var (vs vs vz) ⇒ Var (vs vz))
+       ⇒  Var (vs vs vz)
+       ⇒  Var vz))))
 S = Λ Λ Λ ƛ ƛ ƛ var (vs vs vz) · var vz · (var (vs vz) · var vz)
 
 I′ : Term⁺ Iᵀ
-I′ = Λ   S [ Var vzᵗ ] [ Var vzᵗ ⇒ Var vzᵗ ] [ Var vzᵗ ]
-       · K [ Var vzᵗ ] [ Var vzᵗ ⇒ Var vzᵗ ]
-       · K [ Var vzᵗ ] [ Var vzᵗ ]
+I′ = Λ   S [ Var vz ] [ Var vz ⇒ Var vz ] [ Var vz ]
+       · K [ Var vz ] [ Var vz ⇒ Var vz ]
+       · K [ Var vz ] [ Var vz ]
