@@ -1,17 +1,13 @@
-open import Function
-open import Relation.Binary.PropositionalEquality hiding ([_])
-open import Data.Sum renaming (map to smap)
-open import Data.Product
-
+infixr 6 _⇒ᵏ_ _⇒_
 infixl 5 _▻ᵏ_
-infix  3 _⊆ᵏ_ _∈ᵗ_ _∈_ _⊆²_ _[_⊢ᵗ_] _[_⊢ᵗᵉ_] _⊢_
-infixr 6 _⇒_
-infixl 7 _·_
+infix  3 _⊆ᵏ_ _∈ᵗ_ _∈_ _⊢ᵗ_ _⊢ᵗᵉ_ _⊢_
+infixl 6 _·ᵗ_ _·_
 infixl 9 _[_]ᵗ _[_]
 infixr 5 Λ_ ƛ_
 
 data Kind : Set where
-  ⋆ : Kind
+  ⋆    : Kind
+  _⇒ᵏ_ : Kind -> Kind -> Kind
 
 data Conᵏ : Set where
   εᵏ   : Conᵏ
@@ -27,14 +23,15 @@ data _∈ᵗ_ σ : Conᵏ -> Set where
   vsᵗ_ : ∀ {Θ τ} -> σ ∈ᵗ Θ      -> σ ∈ᵗ Θ ▻ᵏ τ
 
 mutual
-  Type : Conᵏ -> Conᵏ -> Set
-  Type Θᶠ Θᵇ = Θᶠ [ Θᵇ ⊢ᵗ ⋆ ]
+  Type : Conᵏ -> Set
+  Type Θ = Θ ⊢ᵗ ⋆
 
-  data _[_⊢ᵗ_] Θᶠ : Conᵏ -> Kind -> Set where
-    Varᶠ : ∀ {Θᵇ σ} -> σ ∈ᵗ Θᶠ -> Θᶠ [ Θᵇ ⊢ᵗ σ ]
-    Varᵇ : ∀ {Θᵇ σ} -> σ ∈ᵗ Θᵇ -> Θᶠ [ Θᵇ ⊢ᵗ σ ]
-    _⇒_  : ∀ {Θᵇ} -> Type Θᶠ Θᵇ -> Type Θᶠ Θᵇ -> Type Θᶠ Θᵇ
-    π    : ∀ {Θᵇ} σ -> Type Θᶠ (Θᵇ ▻ᵏ σ) -> Type Θᶠ Θᵇ
+  -- No type-level lambdas.
+  data _⊢ᵗ_ Θ : Kind -> Set where
+    Var  : ∀ {σ} -> σ ∈ᵗ Θ -> Θ ⊢ᵗ σ
+    _·ᵗ_ : ∀ {σ τ} -> Θ ⊢ᵗ σ ⇒ᵏ τ -> Θ ⊢ᵗ σ -> Θ ⊢ᵗ τ
+    _⇒_  : Type Θ -> Type Θ -> Type Θ
+    π    : ∀ σ -> Type (Θ ▻ᵏ σ) -> Type Θ
 
 idᵏ : ∀ {Θ} -> Θ ⊆ᵏ Θ
 idᵏ {εᵏ}     = stopᵏ
@@ -49,113 +46,73 @@ renᵗᵛ (skipᵏ ι)  v      = vsᵗ (renᵗᵛ ι v)
 renᵗᵛ (keepᵏ ι)  vzᵗ    = vzᵗ
 renᵗᵛ (keepᵏ ι) (vsᵗ v) = vsᵗ (renᵗᵛ ι v)
 
--- We don't need OPEs here.
-renᵗᶠ : ∀ {Θᶠ Ξᶠ Θᵇ σ} -> Θᶠ ⊆ᵏ Ξᶠ -> Θᶠ [ Θᵇ ⊢ᵗ σ ] -> Ξᶠ [ Θᵇ ⊢ᵗ σ ]
-renᵗᶠ ι (Varᶠ v) = Varᶠ (renᵗᵛ ι v)
-renᵗᶠ ι (Varᵇ v) = Varᵇ v
-renᵗᶠ ι (α ⇒ β)  = renᵗᶠ ι α ⇒ renᵗᶠ ι β
-renᵗᶠ ι (π σ α)  = π σ (renᵗᶠ ι α)
+renᵗ : ∀ {Θ Ξ σ} -> Θ ⊆ᵏ Ξ -> Θ ⊢ᵗ σ -> Ξ ⊢ᵗ σ
+renᵗ ι (Var v)  = Var (renᵗᵛ ι v)
+renᵗ ι (f ·ᵗ α) = renᵗ ι f ·ᵗ renᵗ ι α
+renᵗ ι (α ⇒ β)  = renᵗ ι α ⇒ renᵗ ι β
+renᵗ ι (π σ α)  = π σ (renᵗ (keepᵏ ι) α)
 
-renᵗᵇ : ∀ {Θᶠ Θᵇ Ξᵇ σ} -> Θᵇ ⊆ᵏ Ξᵇ -> Θᶠ [ Θᵇ ⊢ᵗ σ ] -> Θᶠ [ Ξᵇ ⊢ᵗ σ ]
-renᵗᵇ ι (Varᶠ v) = Varᶠ v
-renᵗᵇ ι (Varᵇ v) = Varᵇ (renᵗᵛ ι v)
-renᵗᵇ ι (α ⇒ β)  = renᵗᵇ ι α ⇒ renᵗᵇ ι β
-renᵗᵇ ι (π σ α)  = π σ (renᵗᵇ (keepᵏ ι) α)
+data _⊢ᵗᵉ_ Ξ : Conᵏ -> Set where
+  Øᵗ   : Ξ ⊢ᵗᵉ εᵏ
+  _▷ᵗ_ : ∀ {Θ σ} -> Ξ ⊢ᵗᵉ Θ -> Ξ ⊢ᵗ σ -> Ξ ⊢ᵗᵉ Θ ▻ᵏ σ
 
-data _[_⊢ᵗᵉ_] Ξᶠ Ξᵇ : Conᵏ -> Set where
-  Øᵗ   : Ξᶠ [ Ξᵇ ⊢ᵗᵉ εᵏ ]
-  _▷ᵗ_ : ∀ {Θ σ} -> Ξᶠ [ Ξᵇ ⊢ᵗᵉ Θ ] -> Ξᶠ [ Ξᵇ ⊢ᵗ σ ] -> Ξᶠ [ Ξᵇ ⊢ᵗᵉ Θ ▻ᵏ σ ]
-
-lookupᵗᵉ : ∀ {Ξᶠ Ξᵇ Θ σ} -> σ ∈ᵗ Θ -> Ξᶠ [ Ξᵇ ⊢ᵗᵉ Θ ] -> Ξᶠ [ Ξᵇ ⊢ᵗ σ ]
+lookupᵗᵉ : ∀ {Ξ Θ σ} -> σ ∈ᵗ Θ -> Ξ ⊢ᵗᵉ Θ -> Ξ ⊢ᵗ σ
 lookupᵗᵉ  vzᵗ    (ρ ▷ᵗ α) = α
 lookupᵗᵉ (vsᵗ v) (ρ ▷ᵗ α) = lookupᵗᵉ v ρ
 
-renᵗᶠᵉ : ∀ {Ξᶠ Ωᶠ Ξᵇ Θ} -> Ξᶠ ⊆ᵏ Ωᶠ -> Ξᶠ [ Ξᵇ ⊢ᵗᵉ Θ ] -> Ωᶠ [ Ξᵇ  ⊢ᵗᵉ Θ ]
-renᵗᶠᵉ ι  Øᵗ      = Øᵗ
-renᵗᶠᵉ ι (ρ ▷ᵗ α) = renᵗᶠᵉ ι ρ ▷ᵗ renᵗᶠ ι α
+renᵗᵉ : ∀ {Ξ Ω Θ} -> Ξ ⊆ᵏ Ω -> Ξ ⊢ᵗᵉ Θ -> Ω ⊢ᵗᵉ Θ
+renᵗᵉ ι  Øᵗ      = Øᵗ
+renᵗᵉ ι (ρ ▷ᵗ α) = renᵗᵉ ι ρ ▷ᵗ renᵗ ι α
 
-renᵗᵇᵉ : ∀ {Ξᶠ Ξᵇ Ωᵇ Θ} -> Ξᵇ ⊆ᵏ Ωᵇ -> Ξᶠ [ Ξᵇ ⊢ᵗᵉ Θ ] -> Ξᶠ [ Ωᵇ  ⊢ᵗᵉ Θ ]
-renᵗᵇᵉ ι  Øᵗ      = Øᵗ
-renᵗᵇᵉ ι (ρ ▷ᵗ α) = renᵗᵇᵉ ι ρ ▷ᵗ renᵗᵇ ι α
+keepᵗᵉ : ∀ {Ξ Θ σ} -> Ξ ⊢ᵗᵉ Θ -> Ξ ▻ᵏ σ ⊢ᵗᵉ Θ ▻ᵏ σ
+keepᵗᵉ ρ = renᵗᵉ topᵏ ρ ▷ᵗ Var vzᵗ
 
-keepᵗᵇᵉ : ∀ {Ξᶠ Ξᵇ Θ σ} -> Ξᶠ [ Ξᵇ ⊢ᵗᵉ Θ ] -> Ξᶠ [ Ξᵇ ▻ᵏ σ ⊢ᵗᵉ Θ ▻ᵏ σ ]
-keepᵗᵇᵉ ρ = renᵗᵇᵉ topᵏ ρ ▷ᵗ Varᵇ vzᵗ
-
-idᵗᵉ : ∀ {Θᵇ Θᶠ} -> Θᶠ [ Θᵇ ⊢ᵗᵉ Θᵇ ]
+idᵗᵉ : ∀ {Θ} -> Θ ⊢ᵗᵉ Θ
 idᵗᵉ {εᵏ}     = Øᵗ
-idᵗᵉ {Θ ▻ᵏ σ} = keepᵗᵇᵉ idᵗᵉ
+idᵗᵉ {Θ ▻ᵏ σ} = keepᵗᵉ idᵗᵉ
 
-topᵗᵇᵉ : ∀ {Θᶠ Θᵇ σ} -> Θᶠ [ Θᵇ ⊢ᵗ σ ] -> Θᶠ [ Θᵇ ⊢ᵗᵉ Θᵇ ▻ᵏ σ ]
-topᵗᵇᵉ α = idᵗᵉ ▷ᵗ α
+topᵗᵉ : ∀ {Θ σ} -> Θ ⊢ᵗ σ -> Θ ⊢ᵗᵉ Θ ▻ᵏ σ
+topᵗᵉ α = idᵗᵉ ▷ᵗ α
 
-subᵗᵇ : ∀ {Ξᶠ Ξᵇ Θ σ} -> Ξᶠ [ Ξᵇ ⊢ᵗᵉ Θ ] -> Ξᶠ [ Θ ⊢ᵗ σ ] -> Ξᶠ [ Ξᵇ ⊢ᵗ σ ]
-subᵗᵇ ρ (Varᶠ v) = Varᶠ v
-subᵗᵇ ρ (Varᵇ v) = lookupᵗᵉ v ρ
-subᵗᵇ ρ (α ⇒ β)  = subᵗᵇ ρ α ⇒ subᵗᵇ ρ β
-subᵗᵇ ρ (π σ α)  = π σ (subᵗᵇ (keepᵗᵇᵉ ρ) α)
+subᵗ : ∀ {Ξ Θ σ} -> Ξ ⊢ᵗᵉ Θ -> Θ ⊢ᵗ σ -> Ξ ⊢ᵗ σ
+subᵗ ρ (Var v)  = lookupᵗᵉ v ρ
+subᵗ ρ (f ·ᵗ α) = subᵗ ρ f ·ᵗ subᵗ ρ α
+subᵗ ρ (α ⇒ β)  = subᵗ ρ α ⇒ subᵗ ρ β
+subᵗ ρ (π σ α)  = π σ (subᵗ (keepᵗᵉ ρ) α)
 
-_[_]ᵗ : ∀ {Θᶠ Θᵇ σ τ} -> Θᶠ [ Θᵇ ▻ᵏ σ ⊢ᵗ τ ] -> Θᶠ [ Θᵇ ⊢ᵗ σ ] -> Θᶠ [ Θᵇ ⊢ᵗ τ ]
-β [ α ]ᵗ = subᵗᵇ (topᵗᵇᵉ α) β
+_[_]ᵗ : ∀ {Θ σ τ} -> Θ ▻ᵏ σ ⊢ᵗ τ -> Θ ⊢ᵗ σ -> Θ ⊢ᵗ τ
+β [ α ]ᵗ = subᵗ (topᵗᵉ α) β
 
-data Con Θᶠ Θᵇ : Set where
-  ε   : Con Θᶠ Θᵇ
-  _▻_ : Con Θᶠ Θᵇ -> Type Θᶠ Θᵇ -> Con Θᶠ Θᵇ
+data Con Θ : Set where
+  ε   : Con Θ
+  _▻_ : Con Θ -> Type Θ -> Con Θ
 
-mapᶜ : ∀ {Θᶠ Θᵇ Θᶠ′ Θᵇ′} -> (Type Θᶠ Θᵇ -> Type Θᶠ′ Θᵇ′) -> Con Θᶠ Θᵇ -> Con Θᶠ′ Θᵇ′ 
-mapᶜ f  ε      = ε
-mapᶜ f (Γ ▻ σ) = mapᶜ f Γ ▻ f σ
+renᶜ : ∀ {Θ Ξ} -> Θ ⊆ᵏ Ξ -> Con Θ -> Con Ξ
+renᶜ ι  ε      = ε
+renᶜ ι (Γ ▻ α) = renᶜ ι Γ ▻ renᵗ ι α
 
-renᶜᶠ : ∀ {Θᶠ Ξᶠ Θᵇ} -> Θᶠ ⊆ᵏ Ξᶠ -> Con Θᶠ Θᵇ -> Con Ξᶠ Θᵇ
-renᶜᶠ = mapᶜ ∘ renᵗᶠ
+shiftᶜ : ∀ {Θ σ} -> Con Θ -> Con (Θ ▻ᵏ σ)
+shiftᶜ = renᶜ topᵏ
 
-shiftᶜᶠ : ∀ {Θᶠ Θᵇ σ} -> Con Θᶠ Θᵇ -> Con (Θᶠ ▻ᵏ σ) Θᵇ
-shiftᶜᶠ = renᶜᶠ topᵏ
-
-data _⊆²_ : Conᵏ × Conᵏ -> Conᵏ × Conᵏ -> Set where
-  stop² : ∀ {Θ Ξ}           -> Θ  , Ξ  ⊆² Θ  , Ξ
-  skip² : ∀ {Θ₀ Θ₁ Ξ₀ Ξ₁ σ} -> Θ₀ , Ξ₀ ⊆² Θ₁ , Ξ₁ -> Θ₀ , Ξ₀      ⊆² Θ₁ ▻ᵏ σ , Ξ₁ ▻ᵏ σ
-  keep² : ∀ {Θ₀ Θ₁ Ξ₀ Ξ₁ σ} -> Θ₀ , Ξ₀ ⊆² Θ₁ , Ξ₁ -> Θ₀ , Ξ₀ ▻ᵏ σ ⊆² Θ₁      , Ξ₁ ▻ᵏ σ
-
-freeʳ : ∀ {Θᶠ Θᵇ Ξᶠ Ξᵇ} -> Θᶠ , Θᵇ ⊆² Ξᶠ , Ξᵇ -> Θᶠ ⊆ᵏ Ξᶠ
-freeʳ  stop²    = idᵏ
-freeʳ (skip² ι) = skipᵏ (freeʳ ι)
-freeʳ (keep² ι) = freeʳ ι
-
-openᵗᵛ : ∀ {Θᶠ Θᵇ Ξᶠ Ξᵇ σ} -> Θᶠ , Θᵇ ⊆² Ξᶠ , Ξᵇ -> σ ∈ᵗ Ξᵇ -> σ ∈ᵗ Θᵇ ⊎ σ ∈ᵗ Ξᶠ
-openᵗᵛ  stop²     v      = inj₁ v
-openᵗᵛ (skip² ι)  vzᵗ    = inj₂ vzᵗ
-openᵗᵛ (skip² ι) (vsᵗ v) = smap id vsᵗ_ (openᵗᵛ ι v)
-openᵗᵛ (keep² ι)  vzᵗ    = inj₁ vzᵗ
-openᵗᵛ (keep² ι) (vsᵗ v) = smap vsᵗ_ id (openᵗᵛ ι v)
-
-openᵗ : ∀ {Θᶠ Θᵇ Ξᶠ Ξᵇ σ} -> Θᶠ , Θᵇ ⊆² Ξᶠ , Ξᵇ -> Θᶠ [ Ξᵇ ⊢ᵗ σ ] -> Ξᶠ [ Θᵇ ⊢ᵗ σ ]
-openᵗ ι (Varᶠ v) = Varᶠ (renᵗᵛ (freeʳ ι) v)
-openᵗ ι (Varᵇ v) = [ Varᵇ , Varᶠ ]′ (openᵗᵛ ι v)
-openᵗ ι (α ⇒ β)  = openᵗ ι α ⇒ openᵗ ι β
-openᵗ ι (π σ α)  = π σ (openᵗ (keep² ι) α)
-
-open₁ : ∀ {Θᶠ Θᵇ σ τ} -> Θᶠ [ Θᵇ ▻ᵏ σ ⊢ᵗ τ ] -> Θᶠ ▻ᵏ σ [ Θᵇ ⊢ᵗ τ ]
-open₁ = openᵗ (skip² stop²)
-
-data _∈_ {Θᶠ Θᵇ} α : Con Θᶠ Θᵇ -> Set where
+data _∈_ {Θ} α : Con Θ -> Set where
   vz  : ∀ {Γ}   -> α ∈ Γ ▻ α
   vs_ : ∀ {Γ β} -> α ∈ Γ     -> α ∈ Γ ▻ β
 
-data _⊢_ {Θᶠ Θᵇ} Γ : Type Θᶠ Θᵇ -> Set where
+data _⊢_ {Θ} Γ : Type Θ -> Set where
   var  : ∀ {α}   -> α ∈ Γ -> Γ ⊢ α
-  Λ_   : ∀ {σ α} -> shiftᶜᶠ Γ ⊢ open₁ α -> Γ ⊢ π σ α
-  _[_] : ∀ {σ β} -> Γ ⊢ π σ β -> (α : Θᶠ [ Θᵇ ⊢ᵗ σ ]) -> Γ ⊢ β [ α ]ᵗ
+  Λ_   : ∀ {σ α} -> shiftᶜ Γ ⊢ α -> Γ ⊢ π σ α
+  _[_] : ∀ {σ β} -> Γ ⊢ π σ β -> (α : Θ ⊢ᵗ σ) -> Γ ⊢ β [ α ]ᵗ
   ƛ_   : ∀ {α β} -> Γ ▻ α ⊢ β -> Γ ⊢ α ⇒ β
   _·_  : ∀ {α β} -> Γ ⊢ α ⇒ β -> Γ ⊢ α     -> Γ ⊢ β
-
+  
 Type⁺ : Set
-Type⁺ = ∀ {Θᶠ Θᵇ} -> Type Θᶠ Θᵇ
+Type⁺ = ∀ {Θ} -> Type Θ
 
 Term⁺ : Type⁺ -> Set
-Term⁺ α = ∀ {Θᶠ Θᵇ} {Γ : Con Θᶠ Θᵇ} -> Γ ⊢ α
+Term⁺ α = ∀ {Θ} {Γ : Con Θ} -> Γ ⊢ α
 
 Iᵀ : Type⁺
-Iᵀ = π ⋆ (Varᵇ vzᵗ ⇒ Varᵇ vzᵗ)
+Iᵀ = π ⋆ (Var vzᵗ ⇒ Var vzᵗ)
 
 I : Term⁺ Iᵀ
 I = Λ ƛ (var vz)
@@ -163,17 +120,17 @@ I = Λ ƛ (var vz)
 I·I : Term⁺ Iᵀ
 I·I = I [ Iᵀ ] · I
 
-K : Term⁺ (π ⋆ (π ⋆ (Varᵇ (vsᵗ vzᵗ) ⇒ Varᵇ vzᵗ ⇒ Varᵇ (vsᵗ vzᵗ))))
+K : Term⁺ (π ⋆ (π ⋆ (Var (vsᵗ vzᵗ) ⇒ Var vzᵗ ⇒ Var (vsᵗ vzᵗ))))
 K = Λ Λ ƛ ƛ var (vs vz)
 
 S : Term⁺ (π ⋆ (π ⋆ (π ⋆
-      (  (Varᵇ (vsᵗ vsᵗ vzᵗ) ⇒ Varᵇ (vsᵗ vzᵗ) ⇒ Varᵇ vzᵗ)
-       ⇒ (Varᵇ (vsᵗ vsᵗ vzᵗ) ⇒ Varᵇ (vsᵗ vzᵗ))
-       ⇒  Varᵇ (vsᵗ vsᵗ vzᵗ)
-       ⇒  Varᵇ vzᵗ))))
+      (  (Var (vsᵗ vsᵗ vzᵗ) ⇒ Var (vsᵗ vzᵗ) ⇒ Var vzᵗ)
+       ⇒ (Var (vsᵗ vsᵗ vzᵗ) ⇒ Var (vsᵗ vzᵗ))
+       ⇒  Var (vsᵗ vsᵗ vzᵗ)
+       ⇒  Var vzᵗ))))
 S = Λ Λ Λ ƛ ƛ ƛ var (vs vs vz) · var vz · (var (vs vz) · var vz)
 
 I′ : Term⁺ Iᵀ
-I′ = Λ   S [ Varᶠ vzᵗ ] [ Varᶠ vzᵗ ⇒ Varᶠ vzᵗ ] [ Varᶠ vzᵗ ]
-       · K [ Varᶠ vzᵗ ] [ Varᶠ vzᵗ ⇒ Varᶠ vzᵗ ]
-       · K [ Varᶠ vzᵗ ] [ Varᶠ vzᵗ ]
+I′ = Λ   S [ Var vzᵗ ] [ Var vzᵗ ⇒ Var vzᵗ ] [ Var vzᵗ ]
+       · K [ Var vzᵗ ] [ Var vzᵗ ⇒ Var vzᵗ ]
+       · K [ Var vzᵗ ] [ Var vzᵗ ]
