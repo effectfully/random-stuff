@@ -61,6 +61,11 @@ module _ {α} {A : Set α} where
   ∘ˢ-idˢ (skip ι) = cong skip (∘ˢ-idˢ ι)
   ∘ˢ-idˢ (keep ι) = cong keep (∘ˢ-idˢ ι)
 
+  renᵛ-idˢ : ∀ {Γ σ} (v : σ ∈ Γ)
+           -> renᵛ idˢ v ≡ v
+  renᵛ-idˢ  vz    = refl
+  renᵛ-idˢ (vs v) = cong vs_ (renᵛ-idˢ v)
+
   renᵛ-∘ˢ : ∀ {Γ Δ Ξ σ} (κ : Δ ⊆ Ξ) (ι : Γ ⊆ Δ) (v : σ ∈ Γ)
           -> renᵛ κ (renᵛ ι v) ≡ renᵛ (κ ∘ˢ ι) v
   renᵛ-∘ˢ  stop     stop     ()
@@ -77,9 +82,9 @@ mapᶜ f (Γ ▻ x) = mapᶜ f Γ ▻ f x
 
 record Thing {α β} {A : Set α} (_∙_ : Con A -> A -> Set β) : Set (α ⊔ β) where
   field
-    renᶠ : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Γ ∙ σ -> Δ ∙ σ
-    cohᶠ : ∀ {Γ Δ Ξ σ} (κ : Δ ⊆ Ξ) (ι : Γ ⊆ Δ) (t : Γ ∙ σ)
-         -> renᶠ κ (renᶠ ι t) ≡ renᶠ (κ ∘ˢ ι) t
+    renᶠ    : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Γ ∙ σ -> Δ ∙ σ
+    renᶠ-∘ˢ : ∀ {Γ Δ Ξ σ} (κ : Δ ⊆ Ξ) (ι : Γ ⊆ Δ) (t : Γ ∙ σ)
+            -> renᶠ κ (renᶠ ι t) ≡ renᶠ (κ ∘ˢ ι) t
 
   renᶜ : ∀ {Γ Δ σ} -> Γ ⊆ Δ -> Con (Γ ∙ σ) -> Con (Δ ∙ σ)
   renᶜ ι = mapᶜ (renᶠ ι)
@@ -113,7 +118,7 @@ record Thing {α β} {A : Set α} (_∙_ : Con A -> A -> Set β) : Set (α ⊔ �
   renᶜ-∘ˢ : ∀ {Θ Ξ Ω σ} (κ : Ξ ⊆ Ω) (ι : Θ ⊆ Ξ) (Γ : Con (Θ ∙ σ))
           -> renᶜ κ (renᶜ ι Γ) ≡ renᶜ (κ ∘ˢ ι) Γ
   renᶜ-∘ˢ κ ι  ε      = refl
-  renᶜ-∘ˢ κ ι (Γ ▻ α) = cong₂ _▻_ (renᶜ-∘ˢ κ ι Γ) (cohᶠ κ ι α)
+  renᶜ-∘ˢ κ ι (Γ ▻ α) = cong₂ _▻_ (renᶜ-∘ˢ κ ι Γ) (renᶠ-∘ˢ κ ι α)
 
 record Environment {α β} {A : Set α} {_∙_ : Con A -> A -> Set β}
                    (thing : Thing _∙_) : Set (α ⊔ β) where
@@ -123,7 +128,9 @@ record Environment {α β} {A : Set α} {_∙_ : Con A -> A -> Set β}
   open Thing thing
 
   field
-    varᶠ : ∀ {Γ σ} -> σ ∈ Γ -> Γ ∙ σ
+    varᶠ      : ∀ {Γ σ} -> σ ∈ Γ -> Γ ∙ σ
+    renᶠ-varᶠ : ∀ {Γ Δ σ} (ι : Γ ⊆ Δ) (v : σ ∈ Γ)
+              -> renᶠ ι (varᶠ v) ≡ varᶠ (renᵛ ι v)
 
   data _⊢ᵉ_ Δ : Con A -> Set β where
     Ø   : Δ ⊢ᵉ ε
@@ -162,6 +169,24 @@ record Environment {α β} {A : Set α} {_∙_ : Con A -> A -> Set β}
   to-env  stop    = Ø
   to-env (skip ι) = shiftᵉ (to-env ι)
   to-env (keep ι) = keepᵉ (to-env ι)
+
+  renᵉ-∘ˢ : ∀ {Θ Γ Δ Ξ} (κ : Δ ⊆ Ξ) (ι : Γ ⊆ Δ) (ρ : Γ ⊢ᵉ Θ)
+          -> renᵉ κ (renᵉ ι ρ) ≡ renᵉ (κ ∘ˢ ι) ρ
+  renᵉ-∘ˢ κ ι  Ø      = refl
+  renᵉ-∘ˢ κ ι (ρ ▷ t) = cong₂ _▷_ (renᵉ-∘ˢ κ ι ρ) (renᶠ-∘ˢ κ ι t)
+
+  lookupᵉ-renᵉ : ∀ {Γ Δ Ξ σ} (v : σ ∈ Γ) (ι : Δ ⊆ Ξ) (ρ : Δ ⊢ᵉ Γ) 
+               -> lookupᵉ v (renᵉ ι ρ) ≡ renᶠ ι (lookupᵉ v ρ)
+  lookupᵉ-renᵉ  vz    ι (ρ ▷ t) = refl
+  lookupᵉ-renᵉ (vs v) ι (ρ ▷ t) = lookupᵉ-renᵉ v ι ρ
+
+  lookupᵉ-idᵉ : ∀ {Γ σ} (v : σ ∈ Γ)
+              -> lookupᵉ v idᵉ ≡ varᶠ v
+  lookupᵉ-idᵉ  vz    = refl
+  lookupᵉ-idᵉ (vs v) = trans (lookupᵉ-renᵉ v top idᵉ)
+                             (trans (cong (renᶠ top) (lookupᵉ-idᵉ v))
+                                    (trans (renᶠ-varᶠ top v)
+                                           (cong (varᶠ ∘ vs_) (renᵛ-idˢ v))))
 
 record NestedEnvironments {α β γ} {A : Set α} {_∙_ : Con A -> A -> Set β} {σ}
                           {_◆_ : ∀ {Θ} -> Con (Θ ∙ σ) -> Θ ∙ σ -> Set γ}

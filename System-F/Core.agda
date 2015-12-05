@@ -35,6 +35,9 @@ renᵗ ι (f ·ᵗ α) = renᵗ ι f ·ᵗ renᵗ ι α
 renᵗ ι (α ⇒ β)  = renᵗ ι α ⇒ renᵗ ι β
 renᵗ ι (π σ α)  = π σ (renᵗ (keep ι) α)
 
+shiftᵗ : ∀ {Θ σ τ} -> Θ ⊢ᵗ σ -> Θ ▻ τ ⊢ᵗ σ
+shiftᵗ = renᵗ top
+
 renᵗ-∘ˢ : ∀ {Θ Ξ Ω σ} (κ : Ξ ⊆ Ω) (ι : Θ ⊆ Ξ) (α : Θ ⊢ᵗ σ)
         -> renᵗ κ (renᵗ ι α) ≡ renᵗ (κ ∘ˢ ι) α
 renᵗ-∘ˢ κ ι (Var v)  = cong Var (renᵛ-∘ˢ κ ι v)
@@ -44,13 +47,14 @@ renᵗ-∘ˢ κ ι (π σ α)  = cong (π σ) (renᵗ-∘ˢ (keep κ) (keep ι) 
 
 TypeTh : Thing _⊢ᵗ_
 TypeTh = record
-  { renᶠ = renᵗ
-  ; cohᶠ = renᵗ-∘ˢ
+  { renᶠ    = renᵗ
+  ; renᶠ-∘ˢ = renᵗ-∘ˢ
   }
 
 TypeEnv : Environment TypeTh
 TypeEnv = record
-  { varᶠ = Var
+  { varᶠ      = Var
+  ; renᶠ-varᶠ = λ ι v -> refl
   }
 
 open module TypeThing       = Thing       TypeTh
@@ -88,6 +92,9 @@ ren ι (f [ α ]) = ren ι f [ α ]
 ren ι (ƛ b)     = ƛ (ren (keep ι) b)
 ren ι (f · x)   = ren ι f · ren ι x
 
+shift : ∀ {Θ Γ} {σ τ : Type Θ} -> Γ ⊢ σ -> Γ ▻ τ ⊢ σ
+shift = ren top
+
 ren-∘ˢ : ∀ {Θ Γ Δ Ξ} {α : Type Θ} (κ : Δ ⊆ Ξ) (ι : Γ ⊆ Δ) (t : Γ ⊢ α)
        -> ren κ (ren ι t) ≡ ren (κ ∘ˢ ι) t
 ren-∘ˢ κ ι (var v)   = cong var (renᵛ-∘ˢ κ ι v)
@@ -99,13 +106,14 @@ ren-∘ˢ κ ι (f · x)   = cong₂ _·_ (ren-∘ˢ κ ι f) (ren-∘ˢ κ ι x
 
 TermTh : ∀ {Θ} -> Thing (_⊢_ {Θ})
 TermTh = record
-  { renᶠ = ren
-  ; cohᶠ = ren-∘ˢ
+  { renᶠ    = ren
+  ; renᶠ-∘ˢ = ren-∘ˢ
   }
 
 TermEnv : ∀ {Θ} -> Environment (TermTh {Θ})
 TermEnv = record
-  { varᶠ = var
+  { varᶠ      = var
+  ; renᶠ-varᶠ = λ ι v -> refl
   }
 
 module TermThing       {Θ} = Thing       (TermTh  {Θ})
