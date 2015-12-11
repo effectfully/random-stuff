@@ -8,8 +8,6 @@ open import Data.List.Base
 
 record Sing {α} {A : Set α} (x : A) : Set where
 
-maximum = foldr _⊔_ 0
-
 _==_ : ℕ -> ℕ -> Bool
 n == m = ⌊ n ≟ m ⌋
 
@@ -41,6 +39,7 @@ ok = bake λ brownie ->
      keep cupcake   $
      stop
 
+-- {p : ⊥}
 unsolved_meta : Kitchen Cake 0 [] (_ ∷ [])
 unsolved_meta = bake λ brownie ->
                 bake λ muffin  ->
