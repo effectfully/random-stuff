@@ -21,7 +21,7 @@ remove n (m ∷ ns) p  with n == m
 ... | false = m ∷ remove n ns p
 
 data Kitchen {α} (A : Set α) m is : List ℕ -> Set α where
-  stop : ∀ {os} -> Kitchen A m is os
+  stop : Kitchen A m is is
   bake : ∀ {os} -> (Sing m -> Kitchen A (suc m) (m ∷ is) os) -> Kitchen A m is os
   eat  : ∀ {i os} {p : i ∈? is}
        -> Sing i -> Kitchen A m (remove i is p) os -> Kitchen A m is os
@@ -38,11 +38,3 @@ ok = bake λ brownie ->
      eat  brownie   $
      keep cupcake   $
      stop
-
--- {p : ⊥}
-unsolved_meta : Kitchen Cake 0 [] (_ ∷ [])
-unsolved_meta = bake λ brownie ->
-                bake λ muffin  ->
-                eat  brownie   $
-                keep brownie   $
-                stop
