@@ -22,12 +22,12 @@ remove n (m ∷ ns) p  with n == m
 ... | true  = ns
 ... | false = m ∷ remove n ns p
 
-data Kitchen {α} (A : Set α) : ℕ -> List ℕ -> List ℕ -> Set α where
-  stop : ∀ {m is os} -> Kitchen A m is os
-  bake : ∀ {m is os} -> (Sing m -> Kitchen A (suc m) (m ∷ is) os) -> Kitchen A m is os
-  eat  : ∀ {m i is os} {p : i ∈? is}
+data Kitchen {α} (A : Set α) m is : List ℕ -> Set α where
+  stop : ∀ {os} -> Kitchen A m is os
+  bake : ∀ {os} -> (Sing m -> Kitchen A (suc m) (m ∷ is) os) -> Kitchen A m is os
+  eat  : ∀ {i os} {p : i ∈? is}
        -> Sing i -> Kitchen A m (remove i is p) os -> Kitchen A m is os
-  keep : ∀ {m i is os} {p : i ∈? is}
+  keep : ∀ {i os} {p : i ∈? is}
        -> Sing i -> Kitchen A m (remove i is p) os -> Kitchen A m is (i ∷ os)
 
 postulate Cake : Set
