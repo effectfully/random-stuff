@@ -64,6 +64,11 @@ toIFree (pureᵣ x)   = pure x
 toIFree (freeᵣ a g) = free (, a) (λ y -> toIFree (g y))
 
 toIFreer : ∀ {ι σ π α} {I : Set ι} {C : IContainer (I × I) σ π} {A : Set α} {i j}
-         -> IFree C A i j -> IFreer (curry ∘ ⟦ C ⟧ᵢ) A i j
+         -> IFree C A i j -> IFreer (const (curry (Shape C))) A i j
 toIFreer (pure x)    = pureᵣ x
-toIFreer (free sh r) = freeᵣ (sh , id) (λ p -> toIFreer (r p))
+toIFreer (free sh r) = freeᵣ sh (λ p -> toIFreer (r p))
+
+toIFreer′ : ∀ {ι σ π α} {I : Set ι} {C : IContainer (I × I) σ π} {A : Set α} {i j}
+          -> IFree C A i j -> IFreer (curry ∘ ⟦ C ⟧ᵢ) A i j
+toIFreer′ (pure x)    = pureᵣ x
+toIFreer′ (free sh r) = freeᵣ (sh , id) (λ p -> toIFreer′ (r p))
