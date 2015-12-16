@@ -10,14 +10,20 @@ module Context {α} (A : Set α) where
     _▻_ : Con -> A -> Con
     
 module _ {α} {A : Set α} where
-  infixl 5 _▻▻_
+  infixl 5 _▻ᵐ_ _▻▻_
   infix  3 _⊆_ _∈_
 
   open Context A
 
+  foldrᶜ : ∀ {β} {B : Set β} -> (B -> A -> B) -> B -> Con -> B
+  foldrᶜ f z  ε      = z
+  foldrᶜ f z (Γ ▻ σ) = f (foldrᶜ f z Γ) σ
+
+  lengthᶜ : Con -> ℕ
+  lengthᶜ = foldrᶜ (λ r _ -> suc r) 0
+
   _▻▻_ : Con -> Con -> Con
-  Γ ▻▻  ε      = Γ
-  Γ ▻▻ (Δ ▻ τ) = Γ ▻▻ Δ ▻ τ
+  _▻▻_ = foldrᶜ _▻_
 
   data _⊆_ : Con -> Con -> Set where
     stop : ε ⊆ ε
@@ -27,6 +33,14 @@ module _ {α} {A : Set α} where
   data _∈_ σ : Con -> Set where
     vz  : ∀ {Γ}   -> σ ∈ Γ ▻ σ
     vs_ : ∀ {Γ τ} -> σ ∈ Γ     -> σ ∈ Γ ▻ τ
+
+  data Mapᶜ {β} (B : A -> Set β) : Con -> Set β where
+    εᵐ   : Mapᶜ B ε
+    _▻ᵐ_ : ∀ {Γ σ} -> Mapᶜ B Γ -> B σ -> Mapᶜ B (Γ ▻ σ)
+
+  ηMapᶜ : ∀ {β} -> (B : A -> Set β) -> Con -> Set β
+  ηMapᶜ B  ε      = Lift ⊤
+  ηMapᶜ B (Γ ▻ σ) = B σ × ηMapᶜ B Γ
 
   idˢ : ∀ {Γ} -> Γ ⊆ Γ
   idˢ {ε}     = stop
@@ -50,6 +64,10 @@ module _ {α} {A : Set α} where
   renᵛ (skip ι)  v     = vs (renᵛ ι v)
   renᵛ (keep ι)  vz    = vz
   renᵛ (keep ι) (vs v) = vs (renᵛ ι v)
+
+  ∈-to-Fin : ∀ {Γ σ} -> σ ∈ Γ -> Fin (lengthᶜ Γ)
+  ∈-to-Fin  vz    = zero
+  ∈-to-Fin (vs v) = suc (∈-to-Fin v)
 
   idˢ-∘ˢ : ∀ {Γ Δ} -> (ι : Γ ⊆ Δ) -> idˢ ∘ˢ ι ≡ ι
   idˢ-∘ˢ  stop    = refl
@@ -77,8 +95,7 @@ module _ {α} {A : Set α} where
 open Context public
 
 mapᶜ : ∀ {α β} {A : Set α} {B : Set β} -> (A -> B) -> Con A -> Con B
-mapᶜ f  ε      = ε
-mapᶜ f (Γ ▻ x) = mapᶜ f Γ ▻ f x
+mapᶜ f = foldrᶜ (λ r σ -> r ▻ f σ) ε
 
 record Thing {α β} {A : Set α} (_∙_ : Con A -> A -> Set β) : Set (α ⊔ β) where
   field
