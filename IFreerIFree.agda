@@ -11,12 +11,12 @@ data IFreer {ι α β γ} {I : Set ι} (F : Set β -> I -> I -> Set γ)
   freeᵣ : ∀ {i j k B} -> F B i j -> (B -> IFreer F A j k) -> IFreer F A i k
 
 _>>=ᵣ_ : ∀ {ι α β γ δ} {I : Set ι} {F : Set γ -> I -> I -> Set δ} {A : Set α} {B : Set β} {i j k}
-      -> IFreer F A i j -> (A -> IFreer F B j k) -> IFreer F B i k 
+       -> IFreer F A i j -> (A -> IFreer F B j k) -> IFreer F B i k 
 pureᵣ x   >>=ᵣ f = f x
 freeᵣ a g >>=ᵣ f = freeᵣ a λ y -> g y >>=ᵣ f
 
 _>>ᵣ_ : ∀ {ι α β γ δ} {I : Set ι} {F : Set γ -> I -> I -> Set δ} {A : Set α} {B : Set β} {i j k}
-     -> IFreer F A i j -> IFreer F B j k -> IFreer F B i k 
+      -> IFreer F A i j -> IFreer F B j k -> IFreer F B i k 
 a >>ᵣ b = a >>=ᵣ λ _ -> b
 
 liftFᵣ : ∀ {ι α β γ} {I : Set ι} {F : Set β -> I -> I -> Set γ} {A : Set α} {B : Set β} {i j}
