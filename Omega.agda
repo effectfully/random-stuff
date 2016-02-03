@@ -59,21 +59,21 @@ a ⇒ b = a ‵π‵ const b
 Type⁺ : ℕ -> Set
 Type⁺ n = ∀ {m} -> Type (n + m)
 
-nat : Type⁺ 0
-nat {0}     = wrap (at nat₀)
-nat {suc m} = wrap (at nat)
-
-type : ∀ n -> Type⁺ (suc n)
-type n {m} = subst Type (cong suc (+-comm m n)) (go m) where
-  go : ∀ {n} m -> Type (suc m + n)
-  go  0      = wrap  code
-  go (suc m) = wrap (at (go m))
+lift₀ : Type 0 -> Type⁺ 0
+lift₀ a {0}     = a
+lift₀ a {suc m} = wrap (at (lift₀ a))
 
 lift : ∀ {n} -> Type n -> Type⁺ n
-lift a {m} = subst Type (+-comm m _) (go m a) where
+lift {n} a {m} = subst Type (+-comm m n) (go m a) where
   go : ∀ {n} m -> Type n -> Type (m + n)
   go  0      a = a
   go (suc m) a = wrap (at (go m a))
+
+nat : Type⁺ 0
+nat = lift₀ (wrap (at nat₀))
+
+type : ∀ n -> Type⁺ (suc n)
+type n = lift {suc n} (wrap code)
 
 mutual
   data Ω : Set where
@@ -104,13 +104,16 @@ test₃ : Type 4
 test₃ = nat ⇒ (type 3 ⇒ type 1) ⇒ type 2
 
 test₄ : Type 3
-test₄ = type 1 ‵π‵ λ a -> lift a ⇒ type 2 ‵π‵ λ b -> lift b
+test₄ = type 1 ‵π‵ λ a -> lift a ⇒ type 2 ‵π‵ λ b -> nat ⇒ lift b
+
+test₅ : ⟦ test₄ ⟧ ≡ ((a : Type 1) -> ⟦ a ⟧ -> (b : Type 2) -> ℕ -> ⟦ b ⟧)
+test₅ = refl
 
 -- fail₁ : ∀ {n} -> ⟦ type n {0} ⟧ ≡ Type n
 -- fail₁ = refl
 
-test₅ : ⟦ typeₒ 2 ⟧ₒ ≡ Type 2
-test₅ = refl
-
-test₆ : ⟦ ω ⟧ₒ ≡ ∀ n -> ⟦ type n {0} ⟧
+test₆ : ⟦ typeₒ 2 ⟧ₒ ≡ Type 2
 test₆ = refl
+
+test₇ : ⟦ ω ⟧ₒ ≡ ∀ n -> ⟦ type n {0} ⟧
+test₇ = refl
