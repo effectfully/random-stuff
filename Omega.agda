@@ -64,10 +64,16 @@ nat {0}     = wrap (at nat₀)
 nat {suc m} = wrap (at nat)
 
 type : ∀ n -> Type⁺ (suc n)
-type n {m} = subst Type (cong suc (+-comm m n)) (go m n) where
-  go : ∀ m n -> Type (suc m + n)
-  go  0      n = wrap  code
-  go (suc m) n = wrap (at (go m n))
+type n {m} = subst Type (cong suc (+-comm m n)) (go m) where
+  go : ∀ {n} m -> Type (suc m + n)
+  go  0      = wrap  code
+  go (suc m) = wrap (at (go m))
+
+lift : ∀ {n} -> Type n -> Type⁺ n
+lift a {m} = subst Type (+-comm m _) (go m a) where
+  go : ∀ {n} m -> Type n -> Type (m + n)
+  go  0      a = a
+  go (suc m) a = wrap (at (go m a))
 
 mutual
   data Ω : Set where
@@ -97,14 +103,14 @@ test₂ = refl
 test₃ : Type 4
 test₃ = nat ⇒ (type 3 ⇒ type 1) ⇒ type 2
 
+test₄ : Type 3
+test₄ = type 1 ‵π‵ λ a -> lift a ⇒ type 2 ‵π‵ λ b -> lift b
+
 -- fail₁ : ∀ {n} -> ⟦ type n {0} ⟧ ≡ Type n
 -- fail₁ = refl
 
--- fail₂ : Type 1
--- fail₂ = type 0 ‵π‵ λ a -> a
-
-test₄ : ⟦ typeₒ 2 ⟧ₒ ≡ Type 2
-test₄ = refl
-
-test₅ : ⟦ ω ⟧ₒ ≡ ∀ n -> ⟦ type n {0} ⟧
+test₅ : ⟦ typeₒ 2 ⟧ₒ ≡ Type 2
 test₅ = refl
+
+test₆ : ⟦ ω ⟧ₒ ≡ ∀ n -> ⟦ type n {0} ⟧
+test₆ = refl
