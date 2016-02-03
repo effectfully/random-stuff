@@ -14,21 +14,21 @@ open Apply
 record Universe : Set₁ where
   constructor Ψ
   field
-    {Code}  : Set
-    ⟦_/_⟧   : Code -> Set
+    {Univ}  : Set
+    ⟦_/_⟧   : Univ -> Set
 open Universe
 
 mutual
   data Typeᵤ U : Set where
     π σ  : ∀ a -> (⟦ U / a ⟧ᵤ -> Typeᵤ U) -> Typeᵤ U
-    code : Typeᵤ U
-    at   : Code U -> Typeᵤ U
+    prev : Typeᵤ U
+    emb  : Univ U -> Typeᵤ U
 
   ⟦_/_⟧ᵤ : ∀ U -> Typeᵤ U -> Set
   ⟦ U / π a b ⟧ᵤ = ∀   x -> ⟦ U / b x ⟧ᵤ
   ⟦ U / σ a b ⟧ᵤ = ∃ λ x -> ⟦ U / b x ⟧ᵤ
-  ⟦ U / code  ⟧ᵤ = Code U
-  ⟦ U / at c  ⟧ᵤ = ⟦ U / c ⟧
+  ⟦ U / prev  ⟧ᵤ = Univ U
+  ⟦ U / emb c ⟧ᵤ = ⟦ U / c ⟧
 
 data Type₀ : Set where
   nat₀ : Type₀
@@ -45,8 +45,8 @@ mutual
   ⟦_⟧ = ⟦ _ /_⟧ᵤ ∘ unwrap
 
   univ : ℕ -> Universe
-  univ  0      = record { Code = Type₀  ; ⟦_/_⟧ = ⟦_⟧₀ }
-  univ (suc n) = record { Code = Type n ; ⟦_/_⟧ = ⟦_⟧  }
+  univ  0      = record { Univ = Type₀  ; ⟦_/_⟧ = ⟦_⟧₀ }
+  univ (suc n) = record { Univ = Type n ; ⟦_/_⟧ = ⟦_⟧  }
 
 infixr 5 _‵π‵_ _⇒_
 
@@ -61,19 +61,19 @@ Type⁺ n = ∀ {m} -> Type (n + m)
 
 lift₀ : Type 0 -> Type⁺ 0
 lift₀ a {0}     = a
-lift₀ a {suc m} = wrap (at (lift₀ a))
+lift₀ a {suc m} = wrap (emb (lift₀ a))
 
 lift : ∀ {n} -> Type n -> Type⁺ n
 lift {n} a {m} = subst Type (+-comm m n) (go m a) where
   go : ∀ {n} m -> Type n -> Type (m + n)
   go  0      a = a
-  go (suc m) a = wrap (at (go m a))
+  go (suc m) a = wrap (emb (go m a))
 
 nat : Type⁺ 0
-nat = lift₀ (wrap (at nat₀))
+nat = lift₀ (wrap (emb nat₀))
 
 type : ∀ n -> Type⁺ (suc n)
-type n = lift {suc n} (wrap code)
+type n = lift {suc n} (wrap prev)
 
 mutual
   data Ω : Set where
@@ -89,7 +89,7 @@ natₒ : Ω
 natₒ = emb (nat {0})
 
 typeₒ : ℕ -> Ω
-typeₒ n = emb {suc n} (wrap code)
+typeₒ n = emb {suc n} (wrap prev)
 
 ω : Ω
 ω = π natₒ typeₒ
