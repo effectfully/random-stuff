@@ -89,7 +89,7 @@ natₒ : Ω
 natₒ = emb (nat {0})
 
 typeₒ : ℕ -> Ω
-typeₒ n = emb (type n {0})
+typeₒ n = emb {suc n} (wrap code)
 
 ω : Ω
 ω = π natₒ typeₒ
@@ -109,11 +109,8 @@ test₄ = type 1 ‵π‵ λ a -> lift a ⇒ type 2 ‵π‵ λ b -> nat ⇒ lif
 test₅ : ⟦ test₄ ⟧ ≡ ((a : Type 1) -> ⟦ a ⟧ -> (b : Type 2) -> ℕ -> ⟦ b ⟧)
 test₅ = refl
 
--- fail₁ : ∀ {n} -> ⟦ type n {0} ⟧ ≡ Type n
--- fail₁ = refl
-
-test₆ : ⟦ typeₒ 2 ⟧ₒ ≡ Type 2
+test₆ : ∀ {n} -> ⟦ typeₒ n ⟧ₒ ≡ Type n
 test₆ = refl
 
-test₇ : ⟦ ω ⟧ₒ ≡ ∀ n -> ⟦ type n {0} ⟧
+test₇ : ⟦ ω ⟧ₒ ≡ ∀ n -> Type n
 test₇ = refl
