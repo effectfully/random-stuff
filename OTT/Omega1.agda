@@ -271,6 +271,11 @@ postulate
   cong-levOf : ⟦ (π₀ nat λ α -> π₀ nat λ β ->
                     π (univ α) λ A -> π (univ β) λ B -> Eq _ _ A B ⇒ α ≟ℕ β) ⟧
 
+cong : ⟦ (π₁ lev λ α -> π₁ lev λ β -> π (univ⁺ α) λ A ->
+            π (A ⇒ univ⁺ β) λ B -> π A λ x -> π A λ y -> π (π A B) λ f ->
+              eq _ _ A A x y ⇒ eq _ _ (B x) (B y) (f x) (f y)) ⟧
+cong α β A B x y f r = refl _ (π A B) f x y r
+
 hsubstitutive : ⟦ (π₀ nat λ α -> π₀ nat λ β -> π₀ nat λ δ ->
                      π (univ α) λ A -> π (univ β) λ B -> π A λ x -> π B λ y ->
                        π (π₀ nat λ γ -> π (univ γ) λ C -> C ⇒ univ δ) λ D ->

@@ -72,13 +72,13 @@ fold-arg : Fin 3 -> Type -> Type
 fold-arg i σ = lookup i (σ ⇒ σ ∷ σ ∷ nat ∷ [])
 
 data TermE : Effect (Con × Type) where
-  Pure  : ∀ {Γ σ  } -> ⟦ σ ⟧ -> TermE (Γ , σ     )  ⊥       λ()
-  Var   : ∀ {Γ σ  } -> σ ∈ Γ -> TermE (Γ , σ     )  ⊥       λ()
-  Lam   : ∀ {Γ σ τ} ->          TermE (Γ , σ ⇒ τ )  ⊤      (λ _ -> Γ ▻ σ , τ              )
-  App   : ∀ {Γ σ τ} ->          TermE (Γ , τ     )  Bool   (λ b -> Γ     , app-arg b σ τ  )
-  Z     : ∀ {Γ    } ->          TermE (Γ , nat   )  ⊥       λ()
-  S     : ∀ {Γ    } ->          TermE (Γ , nat   )  ⊤      (λ _ -> Γ     , nat            )
-  Fold  : ∀ {Γ σ  } ->          TermE (Γ , σ     ) (Fin 3) (λ i -> Γ     , fold-arg i σ   )
+  Pure  : ∀ {Γ σ  } -> ⟦ σ ⟧ -> TermE (Γ , σ    )  ⊥       λ()
+  Var   : ∀ {Γ σ  } -> σ ∈ Γ -> TermE (Γ , σ    )  ⊥       λ()
+  Lam   : ∀ {Γ σ τ} ->          TermE (Γ , σ ⇒ τ)  ⊤      (λ _ -> Γ ▻ σ , τ            )
+  App   : ∀ {Γ σ τ} ->          TermE (Γ , τ    )  Bool   (λ b -> Γ     , app-arg b σ τ)
+  Z     : ∀ {Γ    } ->          TermE (Γ , nat  )  ⊥       λ()
+  S     : ∀ {Γ    } ->          TermE (Γ , nat  )  ⊤      (λ _ -> Γ     , nat          )
+  Fold  : ∀ {Γ σ  } ->          TermE (Γ , σ    ) (Fin 3) (λ i -> Γ     , fold-arg i σ )
 
 _⊢_ : Con -> Type -> Set
 Γ ⊢ σ = Wer TermE (Γ , σ) ⊥ λ()
