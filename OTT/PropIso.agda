@@ -34,7 +34,7 @@ mutual
   ⟦ top      ⟧ᵀ = ⊤
   ⟦ univ α   ⟧ᵀ = Univ α
   ⟦ σ≡ _ A B ⟧ᵀ = Σ ⟦ A ⟧ᵀ λ x -> ⟦ B x ⟧ᵀ
-  ⟦ π≡ _ A B ⟧ᵀ = (x : ⟦ A ⟧ᵀ) -> ⟦ B x ⟧ᵀ 
+  ⟦ π≡ _ A B ⟧ᵀ = (x : ⟦ A ⟧ᵀ) -> ⟦ B x ⟧ᵀ
 
 pattern σ  A B = σ≡ refl A B
 pattern π  A B = π≡ refl A B

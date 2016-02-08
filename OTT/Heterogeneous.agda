@@ -30,7 +30,7 @@ mutual
   ⟦ fin n  ⟧ᵀ = Fin n
   ⟦ type α ⟧ᵀ = Type α
   ⟦ σ A B  ⟧ᵀ = Σ ⟦ A ⟧ᵀ λ x -> ⟦ B x ⟧ᵀ
-  ⟦ π A B  ⟧ᵀ = (x : ⟦ A ⟧ᵀ) -> ⟦ B x ⟧ᵀ 
+  ⟦ π A B  ⟧ᵀ = (x : ⟦ A ⟧ᵀ) -> ⟦ B x ⟧ᵀ
 
 data _≃_ : ∀ {α β} -> Type α -> Type β -> Set
 data _≅_[_] : ∀ {α β} {A : Type α} {B : Type β} -> ⟦ A ⟧ᵀ -> ⟦ B ⟧ᵀ -> A ≃ B -> Set
@@ -78,7 +78,7 @@ type-inj t≃t = refl
 σ-inj (σ≃σ P Q) = P , Q
 
 π-inj : ∀ {α₁ α₂ β₁ β₂} {A₁ : Type α₁} {A₂ : Type α₂}
-            {B₁ : ⟦ A₁ ⟧ᵀ -> Type β₁} {B₂ : ⟦ A₂ ⟧ᵀ -> Type β₂}
+          {B₁ : ⟦ A₁ ⟧ᵀ -> Type β₁} {B₂ : ⟦ A₂ ⟧ᵀ -> Type β₂}
       -> π A₁ B₁ ≃ π A₂ B₂ -> Σ (A₂ ≃ A₁) λ P -> ∀ {x} -> B₁ (coerce P x) ≃ B₂ x
 π-inj (π≃π P Q) = P , Q
 

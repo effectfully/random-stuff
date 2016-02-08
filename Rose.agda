@@ -73,7 +73,7 @@ module Vec where
   module VecF {α} (A : Set α) where
     data VecF : Over Nat α where
       Nil  : VecF [] z
-      Cons : ∀ {n} -> A -> VecF (n ∷ []) (s n)   
+      Cons : ∀ {n} -> A -> VecF (n ∷ []) (s n)
   open VecF
 
   Vec : ∀ {α} -> Set α -> Nat -> Set α

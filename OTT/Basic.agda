@@ -33,7 +33,7 @@ mutual
   ⟦ top    ⟧ = ⊤
   ⟦ univ α ⟧ = Univ α
   ⟦ σ A B  ⟧ = Σ ⟦ A ⟧ λ x -> ⟦ B x ⟧
-  ⟦ π A B  ⟧ = (x : ⟦ A ⟧) -> ⟦ B x ⟧ 
+  ⟦ π A B  ⟧ = (x : ⟦ A ⟧) -> ⟦ B x ⟧
 
 prop = univ 0
 type = univ ∘ suc

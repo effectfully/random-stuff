@@ -93,7 +93,7 @@ pattern puniv α = luniv _ (l# α)
 pattern σᶠ A B  = σ′ {o = f∨} A B
 pattern πᶠ A B  = π′ {o = f∨} A B
 
-univ⁺ : ∀ α -> Univ (lsuc α)
+univ⁺ : ∀ α -> Type⁺ α
 univ⁺ α = luniv α (toSuc α)
 
 univ = univ⁺ ∘ #
