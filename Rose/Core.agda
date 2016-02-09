@@ -28,7 +28,7 @@ record Rose {ι α} {I : Set ι} (F : Over I α) j : Set (ι ⊔ α) where
     cons   : F is j
     childs : List₁ (Rose F) is
 
-{-# TERMINATING #-}
+{-# TERMINATING #-} -- I refuse to manually unfold the definition of `lmap₂'.
 elimRose : ∀ {ι α π} {I : Set ι} {F : Over I α} {j}
          -> (P : ∀ {j} -> Rose F j -> Set π)
          -> (∀ {is j cs} -> (c : F is j) -> List₂ P cs -> P (rose c cs))
