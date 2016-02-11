@@ -58,15 +58,21 @@ open import Data.Unit.Base
 open import Data.Bool.Base
 open import Data.Nat.Base
 
-module Vec where
+module Vec1 where
   Vec : ∀ {α} -> Set α -> ℕ -> Set α
   Vec A = Rose ((Lift ⊤ , const ([] , 0)) ∷ ((A × ℕ) , λ p -> proj₂ p ∷ [] , suc (proj₂ p)) ∷ [])
 
   nil : ∀ {m α} {A : Set α} -> .(m ≡ 0) -> Vec A m
   nil p = rose (here (, []₁ ,ᵢ p))
 
+  []ᵥ : ∀ {α} {A : Set α} -> Vec A 0
+  []ᵥ = nil refl
+
   cons : ∀ {n m α} {A : Set α} -> .(m ≡ suc n) -> A -> Vec A n -> Vec A m
   cons {n} p x xs = rose (there (here ((x , n) , xs ∷₁ []₁ ,ᵢ p)))
+
+  _∷ᵥ_ : ∀ {n α} {A : Set α} -> A -> Vec A n -> Vec A (suc n)
+  _∷ᵥ_ = cons refl
 
   elimVec : ∀ {n α π} {A : Set α}
           -> (P : ∀ {n} -> Vec A n -> Set π)
@@ -78,26 +84,6 @@ module Vec where
   elimVec P f z (rose (there (here ((x , n) , xs ∷₁ []₁ ,ᵢ p)))) = f p x (elimVec P f z xs)
   elimVec P f z (rose (there (there ())))
 
-module Vec1 where
-  Vec : ∀ {α} -> Set α -> ℕ -> Set α
-  Vec A = Rose ((Lift ⊤ , const ([] , 0)) ∷ ((A × ℕ) , λ p -> proj₂ p ∷ [] , suc (proj₂ p)) ∷ [])
-
-  nil : ∀ {α} {A : Set α} -> Vec A 0
-  nil = rose (here (, []₁ ,ᵢ refl))
-
-  cons : ∀ {n α} {A : Set α} -> A -> Vec A n -> Vec A (suc n)
-  cons {n} x xs = rose (there (here ((x , n) , xs ∷₁ []₁ ,ᵢ refl)))
-
-  elimVec : ∀ {n α π} {A : Set α}
-          -> (P : ∀ {n} -> Vec A n -> Set π)
-          -> (∀ {n} {xs : Vec A n} x -> P xs -> P (cons x xs))
-          -> P nil
-          -> (xs : Vec A n)
-          -> P xs
-  elimVec P f z (rose (here  (_ , []₁ ,ᵢ p)))                    = {!z!}
-  elimVec P f z (rose (there (here ((x , n) , xs ∷₁ []₁ ,ᵢ p)))) = {!f x (elimVec P f z xs)!}
-  elimVec P f z (rose (there (there ())))
-
 module Vec2 where
   caseℕ : ∀ {α} {A : Set α} -> A -> (ℕ -> A) -> ℕ -> A
   caseℕ x f  0      = x
@@ -106,18 +92,19 @@ module Vec2 where
   Vec : ∀ {α} -> Set α -> ℕ -> Set α
   Vec A = Rose (((Σ ℕ (caseℕ (Lift ⊤) (const A))) , uncurry λ n _ -> caseℕ [] [_] n , n) ∷ [])
 
-  nil : ∀ {α} {A : Set α} -> Vec A 0
-  nil = rose (here ((0 , _) , []₁ ,ᵢ refl))
+  nil : ∀ {m α} {A : Set α} -> .(m ≡ 0) -> Vec A m
+  nil p = rose (here ((0 , _) , []₁ ,ᵢ p))
 
-  cons : ∀ {n α} {A : Set α} -> A -> Vec A n -> Vec A (suc n)
-  cons {n} x xs = rose (here ((suc n , x) , xs ∷₁ []₁ ,ᵢ refl))
+  cons : ∀ {n m α} {A : Set α} -> .(m ≡ suc n) -> A -> Vec A n -> Vec A m
+  cons {n} p x xs = rose (here ((suc n , x) , xs ∷₁ []₁ ,ᵢ p))
 
   elimVec : ∀ {n α π} {A : Set α}
           -> (P : ∀ {n} -> Vec A n -> Set π)
-          -> (∀ {n} {xs : Vec A n} x -> P xs -> P (cons x xs))
-          -> P nil
+          -> (∀ {n m} {xs : Vec A n} -> .(p : m ≡ suc n) -> (x : A) -> P xs -> P (cons p x xs))
+          -> (∀ {m} -> .(p : m ≡ 0) -> P (nil p))
           -> (xs : Vec A n)
           -> P xs
-  elimVec P f z (rose (here ((zero  , _) , []₁       ,ᵢ p))) = {!z!}
-  elimVec P f z (rose (here ((suc n , x) , xs ∷₁ []₁ ,ᵢ p))) = {!f x (elimVec P f z xs)!}
+  elimVec P f z (rose (here ((zero  , _) , []₁       ,ᵢ p))) = z p
+  elimVec P f z (rose (here ((suc n , x) , xs ∷₁ []₁ ,ᵢ p))) = f p x (elimVec P f z xs)
   elimVec P f z (rose (there ()))
+
