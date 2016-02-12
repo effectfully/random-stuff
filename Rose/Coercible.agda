@@ -65,11 +65,11 @@ module Vec1 where
   nil : ∀ {m α} {A : Set α} -> .(m ≡ 0) -> Vec A m
   nil p = rose (here (, []₁ ,ᵢ p))
 
-  []ᵥ : ∀ {α} {A : Set α} -> Vec A 0
-  []ᵥ = nil refl
-
   cons : ∀ {n m α} {A : Set α} -> .(m ≡ suc n) -> A -> Vec A n -> Vec A m
   cons {n} p x xs = rose (there (here ((x , n) , xs ∷₁ []₁ ,ᵢ p)))
+
+  []ᵥ : ∀ {α} {A : Set α} -> Vec A 0
+  []ᵥ = nil refl
 
   _∷ᵥ_ : ∀ {n α} {A : Set α} -> A -> Vec A n -> Vec A (suc n)
   _∷ᵥ_ = cons refl
@@ -98,6 +98,12 @@ module Vec2 where
   cons : ∀ {n m α} {A : Set α} -> .(m ≡ suc n) -> A -> Vec A n -> Vec A m
   cons {n} p x xs = rose (here ((suc n , x) , xs ∷₁ []₁ ,ᵢ p))
 
+  []ᵥ : ∀ {α} {A : Set α} -> Vec A 0
+  []ᵥ = nil refl
+
+  _∷ᵥ_ : ∀ {n α} {A : Set α} -> A -> Vec A n -> Vec A (suc n)
+  _∷ᵥ_ = cons refl
+
   elimVec : ∀ {n α π} {A : Set α}
           -> (P : ∀ {n} -> Vec A n -> Set π)
           -> (∀ {n m} {xs : Vec A n} -> .(p : m ≡ suc n) -> (x : A) -> P xs -> P (cons p x xs))
@@ -107,4 +113,3 @@ module Vec2 where
   elimVec P f z (rose (here ((zero  , _) , []₁       ,ᵢ p))) = z p
   elimVec P f z (rose (here ((suc n , x) , xs ∷₁ []₁ ,ᵢ p))) = f p x (elimVec P f z xs)
   elimVec P f z (rose (there ()))
-
