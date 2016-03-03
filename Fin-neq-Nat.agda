@@ -1,110 +1,55 @@
--- This is related to http://webcache.googleusercontent.com/search?q=cache:CkjO-Ym-CSsJ:comments.gmane.org/gmane.science.mathematics.logic.coq.club/13794+&cd=1&hl=ru&ct=clnk&gl=ru&client=firefox-a
--- and to https://github.com/wjzz/Agda-small-developments-and-examples/blob/master/UnitNotBool.agda
+-- Stealing the idea from András Kovács:
+-- https://github.com/AndrasKovacs/misc-stuff/blob/master/agda/Fin-neq-Nat.agda
 
-open import Level
-open import Function
-open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
+open import Relation.Nullary
 open import Data.Empty
-open import Data.Product
-open import Data.Nat as N
-open import Data.Fin as F hiding (_≤_)
-open import Data.List
+open import Data.Nat.Base
+open import Data.Nat.Properties
+open import Data.Fin hiding (_≤_; _<_)
+open import Data.Product renaming (map to pmap)
+open import Data.List.Base renaming (map to lmap)
+open import Data.List.All
 
-≤-trans : ∀ {n m p} -> n ≤ m -> m ≤ p -> n ≤ p
-≤-trans  z≤n       _        = z≤n
-≤-trans (s≤s le1) (s≤s le2) = s≤s (≤-trans le1 le2)
+infix 4 _∈_ _∉_
 
-1+n≰n : ∀ {n} -> N.suc n ≰ n
-1+n≰n (s≤s le) = 1+n≰n le
+data _∈_ {α} {A : Set α} (x : A) : List A -> Set where
+  here  : ∀ {xs}   -> x ∈ x ∷ xs
+  there : ∀ {y xs} -> x ∈ xs -> x ∈ y ∷ xs
 
-infix 2 _∈_
-infixr 5 _u∷_
+_∉_ : ∀ {α} {A : Set α} -> A -> List A -> Set
+x ∉ xs = x ∈ xs -> ⊥
 
-data _∈_ {α : Level} {A : Set α} : A -> List A -> Set α where
-  here  : ∀ {x xs} -> x ∈ x ∷ xs
-  there : ∀ {x xs y} -> x ∈ xs -> x ∈ y ∷ xs
+Finite : ∀ {α} -> Set α -> Set α
+Finite A = ∃ λ xs -> (x : A) -> x ∈ xs
 
-_∉_ : {α : Level} {A : Set α} -> A -> List A -> Set α
-x ∉ xs = ¬ (x ∈ xs)
+∈-map : ∀ {α β} {A : Set α} {B : Set β} {f : A -> B} {x xs} -> x ∈ xs -> f x ∈ lmap f xs
+∈-map  here     = here
+∈-map (there p) = there (∈-map p)
 
-data Uniq {α : Level} {A : Set α} : List A -> Set α where
-  u[]  : Uniq []
-  _u∷_ : ∀ {x xs} -> x ∉ xs -> Uniq xs -> Uniq (x ∷ xs)
+finiteFin : ∀ n -> Finite (Fin n)
+finiteFin  0      = [] , λ()
+finiteFin (suc n) with finiteFin n
+... | xs , k = zero ∷ lmap suc xs , λ{ zero -> here ; (suc i) -> there (∈-map (k i)) }
 
-uniq-delete-1 : ∀ {α} {A : Set α} {x} {y} {xs : List A} -> Uniq (x ∷ y ∷ xs) -> Uniq (x ∷ xs)
-uniq-delete-1 (n u∷ _ u∷ u) = (n ∘ there) u∷ u
+maximum : List ℕ -> ℕ
+maximum = foldr _⊔_ 0
 
-lower-list : ∀ {n} -> List (Fin (N.suc n)) -> List (Fin n)
-lower-list  []          = []
-lower-list (zero  ∷ xs) = lower-list xs
-lower-list (suc i ∷ xs) = i ∷ lower-list xs
+⊔-≤ : ∀ {m p} n -> n ⊔ m ≤ p -> n ≤ p × m ≤ p
+⊔-≤          0       q      = z≤n , q
+⊔-≤ {0}     (suc n)  q      = q , z≤n
+⊔-≤ {suc m} (suc n) (s≤s q) = pmap s≤s s≤s (⊔-≤ n q)
 
-disappeared : ∀ {n} {i : Fin n} -> ∀ xs -> Uniq (F.suc i ∷ xs) -> i ∉ lower-list xs
-disappeared  []           u            ()
-disappeared (zero  ∷ xs)  u            ∈xs        = disappeared xs (uniq-delete-1 u) ∈xs
-disappeared (suc i ∷ xs) (s-i-∉ u∷ _)  here       = ⊥-elim (s-i-∉ here) 
-disappeared (suc i ∷ xs)  u           (there ∈xs) = disappeared xs (uniq-delete-1 u) ∈xs
+all-<-∉ : ∀ {ns : List ℕ} {m} -> All (_< m) ns -> m ∉ ns
+all-<-∉ (p ∷ ps)  here     = 1+n≰n p
+all-<-∉ (p ∷ ps) (there q) = all-<-∉ ps q
 
-uniq-lowered : ∀ {n} -> (xs : List (Fin (N.suc n))) -> Uniq xs -> Uniq (lower-list xs)
-uniq-lowered  []           u[]        = u[]
-uniq-lowered (zero  ∷ xs) (z-∉   u∷ u) = uniq-lowered xs u
-uniq-lowered (suc i ∷ xs) (s-i-∉ u∷ u) = disappeared xs (s-i-∉ u∷ u) u∷ uniq-lowered xs u
+all-<-max : ∀ {m} -> (ns : List ℕ) -> maximum ns < m -> All (_< m) ns
+all-<-max  []      p = []
+all-<-max (n ∷ ns) p = uncurry′ (λ q r -> q ∷ all-<-max ns r) (⊔-≤ (suc n) p)
 
-length-lowered-without-zero : ∀ {p n} -> (xs : List (Fin (N.suc n)))
-                            -> F.zero ∉ xs -> length (lower-list xs) ≤ p -> length xs ≤ p
-length-lowered-without-zero  []          z-∉  le      = z≤n
-length-lowered-without-zero (zero  ∷ xs) z-∉  le      = ⊥-elim (z-∉ here)
-length-lowered-without-zero (suc i ∷ xs) z-∉ (s≤s le) =
-  s≤s (length-lowered-without-zero xs (z-∉ ∘ there) le)
+notFiniteℕ : ¬ Finite ℕ
+notFiniteℕ (ns , k) = all-<-∉ (all-<-max ns (n≤1+n _)) (k _)
 
-length-lowered : ∀ {p n} -> (xs : List (Fin (N.suc n)))
-               -> Uniq xs -> length (lower-list xs) ≤ p -> length xs ≤ N.suc p
-length-lowered  []           u            le      = z≤n
-length-lowered (zero  ∷ xs) (z-∉ u∷ _)    le      = 
-  s≤s (length-lowered-without-zero xs z-∉ le)
-length-lowered (suc i ∷ xs) (s-i-∉ u∷ u) (s≤s le) = s≤s (length-lowered xs u le)
-
-uniq-length : ∀ {n} {xs : List (Fin n)} -> Uniq xs -> length xs ≤ n
-uniq-length {0}     {[]}     _ = z≤n
-uniq-length {0}     {() ∷ _}
-uniq-length {suc n} {xs}     u = length-lowered xs u (uniq-length (uniq-lowered xs u))
-
-
-
-simpleEx : ℕ -> List ℕ
-simpleEx  0      = 0 ∷ []
-simpleEx (suc n) = N.suc n ∷ simpleEx n
-
-∈-simpleEx : ∀ n -> n ∈ simpleEx n
-∈-simpleEx  0      = here
-∈-simpleEx (suc n) = here
-
-weak-simpleEx : ∀ {m} -> (n : ℕ) -> N.suc m ∈ simpleEx n -> m ∈ simpleEx n
-weak-simpleEx  0      (there ())
-weak-simpleEx (suc n)  here       = there (∈-simpleEx n)
-weak-simpleEx (suc n) (there ∉xs) = there (weak-simpleEx n ∉xs)
-
-∉-simpleEx : ∀ n -> N.suc n ∉ simpleEx n
-∉-simpleEx  0      (there ())
-∉-simpleEx (suc n) (there ∈xs) = ∉-simpleEx n (weak-simpleEx n ∈xs)
-
-simpleEx-Uniq : ∀ n -> Uniq (simpleEx n)
-simpleEx-Uniq  0      = (λ ()) u∷ u[]
-simpleEx-Uniq (suc n) = ∉-simpleEx n u∷ simpleEx-Uniq n
-
-simpleEx-length : ∀ n -> length (simpleEx n) > n
-simpleEx-length  0      = s≤s z≤n
-simpleEx-length (suc n) = s≤s (simpleEx-length n)
-
-
-
-Fin-∄ : ∀ {n} -> ∄ λ (xs : List (Fin n)) -> Uniq xs × length xs > n
-Fin-∄ (xs , u , le) = 1+n≰n (≤-trans le (uniq-length u))
-
-ℕ-∃ : ∀ {n} -> ∃ λ (xs : List ℕ) -> Uniq xs × length xs > n
-ℕ-∃ {n} = simpleEx n , simpleEx-Uniq n , simpleEx-length n 
-
-Fin≢ℕ : ∀ n -> Fin n ≢ ℕ 
-Fin≢ℕ n Fin≡ℕ with Fin-∄ {n} 
-... | ℕ-∄ rewrite Fin≡ℕ = ℕ-∄ ℕ-∃
+Fin≢ℕ : ∀ n -> Fin n ≢ ℕ
+Fin≢ℕ n p = notFiniteℕ (subst Finite p (finiteFin n))
