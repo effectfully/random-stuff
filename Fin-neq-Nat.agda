@@ -6,10 +6,9 @@ open import Relation.Nullary
 open import Data.Empty
 open import Data.Nat.Base
 open import Data.Nat.Properties
-open import Data.Fin hiding (_≤_; _<_)
-open import Data.Product renaming (map to pmap)
+open import Data.Fin       hiding (_≤_; _<_)
+open import Data.Product   renaming (map to pmap)
 open import Data.List.Base renaming (map to lmap)
-open import Data.List.All
 
 infix 4 _∈_ _∉_
 
@@ -40,16 +39,12 @@ maximum = foldr _⊔_ 0
 ⊔-≤ {0}     (suc n)  q      = q , z≤n
 ⊔-≤ {suc m} (suc n) (s≤s q) = pmap s≤s s≤s (⊔-≤ n q)
 
-all-<-∉ : ∀ {ns : List ℕ} {m} -> All (_< m) ns -> m ∉ ns
-all-<-∉ (p ∷ ps)  here     = 1+n≰n p
-all-<-∉ (p ∷ ps) (there q) = all-<-∉ ps q
-
-all-<-max : ∀ {m} -> (ns : List ℕ) -> maximum ns < m -> All (_< m) ns
-all-<-max  []      p = []
-all-<-max (n ∷ ns) p = uncurry′ (λ q r -> q ∷ all-<-max ns r) (⊔-≤ (suc n) p)
+<-max-∉ : ∀ {m} {ns : List ℕ} -> maximum ns < m -> m ∉ ns
+<-max-∉ {ns = n ∷ ns} p  here     = 1+n≰n (proj₁ (⊔-≤ {m = suc (maximum ns)} (suc n) p))
+<-max-∉ {ns = n ∷ ns} p (there q) = <-max-∉ (proj₂ (⊔-≤ (suc n) p)) q
 
 notFiniteℕ : ¬ Finite ℕ
-notFiniteℕ (ns , k) = all-<-∉ (all-<-max ns (n≤1+n _)) (k _)
+notFiniteℕ (ns , k) = <-max-∉ (n≤1+n _) (k _)
 
 Fin≢ℕ : ∀ n -> Fin n ≢ ℕ
 Fin≢ℕ n p = notFiniteℕ (subst Finite p (finiteFin n))
