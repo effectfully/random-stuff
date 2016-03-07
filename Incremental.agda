@@ -121,13 +121,10 @@ typecheck ρ (c >> d) = typecheck ρ c >>= λ p -> typecheck (p ∷ ρ) d
 typecheck⁽⁾ : Code⁽⁾ -> Maybe (∃ Term⁺)
 typecheck⁽⁾ = typecheck []
 
-Aᵗ : Type
-Aᵗ = (⋆ ⇒ ⋆) ⇒ ⋆ ⇒ ⋆
+AI : Code⁽⁾
+AI =   ⋆ ⇒ ⋆          ∋ ƛ var fzero
+   >> (⋆ ⇒ ⋆) ⇒ ⋆ ⇒ ⋆ ∋ ƛ ƛ var (fsuc fzero) · var fzero
+   >>           ⋆ ⇒ ⋆ ∋ free fzero · free (fsuc fzero)
 
-A-AA : Code⁽⁾
-A-AA =   ⋆ ⇒ ⋆          ∋ ƛ var fzero
-     >> (⋆ ⇒ ⋆) ⇒ ⋆ ⇒ ⋆ ∋ ƛ ƛ var (fsuc fzero) · var fzero
-     >>           ⋆ ⇒ ⋆ ∋ free fzero · free (fsuc fzero)
-
-test : T ∘ is-just $ typecheck⁽⁾ A-AA
+test : T ∘ is-just $ typecheck⁽⁾ AI
 test = tt
