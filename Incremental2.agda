@@ -8,9 +8,8 @@ open import Data.Nat.Base
 open import Data.Fin renaming (zero to fzero; suc to fsuc) using (Fin)
 open import Data.Maybe
 open import Data.Product
-open import Data.Vec hiding (_>>=_; _∈_; _⊛_)
 open import Category.Monad
-open module Silly {α} = RawMonad (monad {α}) hiding (_>>_)
+open module Silly {α} = RawMonad (monad {α}) hiding (pure; _>>_)
 
 infixr 6 _⇒_
 infixl 5 _▻_ _▻▻_
@@ -20,11 +19,10 @@ infixr 3 ƛ_
 infixl 6 _·_
 infix  5 _≟ᵗ_
 infix  2 _∋_
-infixr 1 _>>_
 
-module _ m where
+module _ A where
   data Syntax n : Set where
-    free : Fin m -> Syntax n
+    pure : A -> Syntax n
     var  : Fin n -> Syntax n
     ƛ_   : Syntax (suc n) -> Syntax n
     _·_  : Syntax n -> Syntax n -> Syntax n
@@ -46,14 +44,20 @@ data _⊢_ {n} (Γ : Con n) : Type -> Set where
   ƛ_  : ∀ {σ τ} -> Γ ▻ σ ⊢ τ -> Γ ⊢ σ ⇒ τ
   _·_ : ∀ {σ τ} -> Γ ⊢ σ ⇒ τ -> Γ ⊢ σ     -> Γ ⊢ τ
 
-Syntax⁽⁾ : ℕ -> Set
-Syntax⁽⁾ m = Syntax m 0
+Syntax⁽⁾ : Set -> Set
+Syntax⁽⁾ A = Syntax A 0
 
 Term⁽⁾ : Type -> Set
 Term⁽⁾ σ = ε ⊢ σ
 
 Term⁺ : Type -> Set
 Term⁺ σ = ∀ {n} {Γ : Con n} -> Γ ⊢ σ
+
+Code : ℕ -> Set
+Code = Syntax (∃ Term⁺)
+
+Def : Set
+Def = Code 0
 
 _▻▻_ : ∀ {n m} -> Con m -> Con n -> Con (n + m)
 Δ ▻▻  ε      = Δ
@@ -79,9 +83,6 @@ _≟ᵗ_ : (σ τ : Type) -> Maybe (σ ≡ τ)
 σ₁ ⇒ τ₁ ≟ᵗ σ₂ ⇒ τ₂ = cong₂ _⇒_ <$> σ₁ ≟ᵗ σ₂ ⊛ τ₁ ≟ᵗ τ₂
 _       ≟ᵗ _       = nothing
 
-Env : ℕ -> Set
-Env = Vec (∃ Term⁺)
-
 coerce : ∀ {n σ τ} {Γ : Con n} -> Γ ⊢ σ -> Maybe (Γ ⊢ τ)
 coerce {σ = σ} {τ} t = (λ p -> subst (_ ⊢_) p t) <$> σ ≟ᵗ τ
 
@@ -94,37 +95,30 @@ lookup-∈ {Γ = Γ ▻ σ}  fzero   = vz
 lookup-∈ {Γ = Γ ▻ σ} (fsuc v) = vs (lookup-∈ v)
 
 mutual
-  infer : ∀ {m n} {Γ : Con n} -> Env m -> Syntax m n -> Maybe (∃ (Γ ⊢_))
-  infer ρ (free v) = just (proj₁ (lookup v ρ) , proj₂ (lookup v ρ))
-  infer ρ (var v ) = just (, var (lookup-∈ v))
-  infer ρ (ƛ b   ) = nothing
-  infer ρ (f · x ) = infer ρ f >>= λ
-    { (σ ⇒ τ , fₜ) -> (λ xₜ -> , fₜ · xₜ) <$> check ρ x σ
+  infer : ∀ {n} {Γ : Con n} -> Code n -> Maybe (∃ (Γ ⊢_))
+  infer (pure (σ , t)) = just (σ , t)
+  infer (var v       ) = just (, var (lookup-∈ v))
+  infer (ƛ b         ) = nothing
+  infer (f · x       ) = infer f >>= λ
+    { (σ ⇒ τ , fₜ) -> (λ xₜ -> , fₜ · xₜ) <$> check x σ
     ;  _           -> nothing
     }
 
-  check : ∀ {m n} {Γ : Con n} -> Env m -> Syntax m n -> (σ : Type) -> Maybe (Γ ⊢ σ)
-  check ρ (ƛ t) (σ ⇒ τ) = ƛ_ <$> check ρ t τ
-  check ρ  t     σ      = infer ρ t >>= coerce ∘ proj₂
+  check : ∀ {n} {Γ : Con n} -> Code n -> (σ : Type) -> Maybe (Γ ⊢ σ)
+  check (ƛ t) (σ ⇒ τ) = ƛ_ <$> check t τ
+  check  t     σ      = infer t >>= coerce ∘ proj₂
 
-data Code m : Set where
-  _∋_  : Type -> Syntax⁽⁾ m -> Code m
-  _>>_ : Code m -> Code (suc m) -> Code m
+typecheck : Def -> (σ : Type) -> Maybe Def
+typecheck t σ = pure ∘ ,_ ∘ lift <$> check t σ
 
-Code⁽⁾ : Set
-Code⁽⁾ = Code 0
+_∋_ : (σ : Type) -> (t : Def) -> _
+σ ∋ t = from-just $ typecheck t σ
 
-typecheck : ∀ {m} -> Env m -> Code m -> Maybe (∃ Term⁺)
-typecheck ρ (σ ∋ t)  = ,_ ∘ lift <$> check ρ t σ
-typecheck ρ (c >> d) = typecheck ρ c >>= λ p -> typecheck (p ∷ ρ) d
+I : Def
+I = ⋆ ⇒ ⋆ ∋ ƛ var fzero
 
-typecheck⁽⁾ : Code⁽⁾ -> Maybe (∃ Term⁺)
-typecheck⁽⁾ = typecheck []
+A : Def
+A = (⋆ ⇒ ⋆) ⇒ ⋆ ⇒ ⋆ ∋ ƛ ƛ var (fsuc fzero) · var fzero
 
-AI : Code⁽⁾
-AI =   ⋆ ⇒ ⋆          ∋ ƛ var fzero
-   >> (⋆ ⇒ ⋆) ⇒ ⋆ ⇒ ⋆ ∋ ƛ ƛ var (fsuc fzero) · var fzero
-   >>           ⋆ ⇒ ⋆ ∋ free fzero · free (fsuc fzero)
-
-test : T ∘ is-just $ typecheck⁽⁾ AI
+test : T ∘ is-just $ typecheck (A · I) (⋆ ⇒ ⋆)
 test = tt
