@@ -108,10 +108,10 @@ mutual
   check (ƛ t) (σ ⇒ τ) = ƛ_ <$> check t τ
   check  t     σ      = infer t >>= coerce ∘ proj₂
 
-typecheck : Def -> (σ : Type) -> Maybe Def
+typecheck : Def -> Type -> Maybe Def
 typecheck t σ = pure ∘ ,_ ∘ lift <$> check t σ
 
-_∋_ : (σ : Type) -> (t : Def) -> _
+_∋_ : ∀ σ t -> _
 σ ∋ t = from-just $ typecheck t σ
 
 I : Def
