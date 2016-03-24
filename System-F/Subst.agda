@@ -74,7 +74,7 @@ sub : ∀ {Θ Γ Δ} {σ : Type Θ} -> Δ ⊢ᵉ Γ -> Γ ⊢ σ -> Δ ⊢ σ
 sub ρ (var v)   = lookupᵉ v ρ
 sub ρ (Λ b)     = Λ (sub (shiftᵉ-⊆ ρ) b)
 sub ρ (f [ α ]) = sub ρ f [ α ]
-sub ρ (ƛ b)     = ƛ sub (keepᵉ ρ) b
+sub ρ (ƛ b)     = ƛ (sub (keepᵉ ρ) b)
 sub ρ (f · x)   = sub ρ f · sub ρ x
 sub ρ  []            = []
 sub ρ (x :: xs)      = sub ρ x :: sub ρ xs

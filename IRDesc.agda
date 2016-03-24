@@ -88,11 +88,8 @@ U = Data (pi bool λ
   ; false -> rpi end tt λ A -> rpi (sig A λ _ -> end) (λ _ -> tt) λ B -> ret tt (π A B)
   }) tt
 
-unat : U
-unat = node (true , refl)
-
-uπ : (A : U) -> (⟦ eval A ⟧ -> U) -> U
-uπ A B = node (false , A , B , refl)
+pattern unat   = node (true , refl)
+pattern uπ A B = node (false , A , B , refl)
 
 {-# TERMINATING #-}
 elimU : ∀ {π}
@@ -101,5 +98,5 @@ elimU : ∀ {π}
       -> P unat
       -> ∀ A
       -> P A
-elimU P h z (node (true  , refl))         = z
-elimU P h z (node (false , A , B , refl)) = h (elimU P h z A) (elimU P h z ∘ B)
+elimU P h z  unat    = z
+elimU P h z (uπ A B) = h (elimU P h z A) (elimU P h z ∘ B)
