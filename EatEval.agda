@@ -112,21 +112,26 @@ Term⁺ A = ∀ {γ} {Γ : Con γ} -> Γ ⊢ A
 _⇒_ : ∀ {α β γ} {Γ : Con γ} -> Type Γ α -> Type Γ β -> Type Γ (α ⊔ β)
 A ⇒ B = π A (shiftᵗ B)
 
+⌜_⌝ : ∀ {α γ} {Γ : Con γ} {A : Type Γ α}
+         {{_ : ∀ {ρ} -> ⟦ A ⟧ᵗ ρ ≡ ⟦ type α ⟧ᵗ ρ}}
+    -> Γ ⊢ A -> Type Γ α
+⌜ t ⌝ = ⌈ coe t ⌉
+
 shift : ∀ {α β γ} {Γ : Con γ} {A : Type Γ α} {B : Type Γ β} -> Γ ⊢ A -> Γ ▻ B ⊢ shiftᵗ A
 shift t = t [ ↑ ]
 
 vs = shift
 
-I₀ : Term⁺ (π (type lzero) $ ⌈ coe vz ⌉ ⇒ ⌈ coe vz ⌉)
+I₀ : Term⁺ (π (type lzero) $ ⌜ vz ⌝ ⇒ ⌜ vz ⌝)
 I₀ = ƛ ƛ vz
 
-I₁ : Term⁺ (π (type lzero) $ π ⌈ coe vz ⌉ $ ⌈ coe (vs vz) ⌉)
+I₁ : Term⁺ (π (type lzero) $ π ⌜ vz ⌝ $ ⌜ vs vz ⌝)
 I₁ = ƛ ƛ coe vz
 
--- Eats 1.2 GB RAM and type checking still doesn't terminate on my machine.
--- Aᵀ : Type⁺ (lsuc lzero)
--- Aᵀ = π (type lzero)
---    $ π (π ⌈ coe vz ⌉ $ type lzero)
---    $ π (π ⌈ coe (vs vz) ⌉ ⌈ coe (_·_ {B = type lzero} (coe (vs vz)) vz) ⌉)
---    $ π ⌈ coe (vs (vs vz)) ⌉
---    $ ⌈ coe (_·_ {B = type lzero} (coe (vs (vs vz))) vz) ⌉
+-- To type check this on my machine I place (coe (vs (vs vz))) in a hole and then reify it.
+Aᵗ : Type⁺ (lsuc lzero)
+Aᵗ = π (type lzero)
+   $ π (π ⌜ vz ⌝ $ type lzero)
+   $ π (π ⌜ vs vz ⌝ ⌜ (_·_ {B = type lzero} (coe (vs vz)) vz) ⌝)
+   $ π ⌜ vs (vs vz) ⌝
+   $ ⌜ _·_ {B = type lzero} (coe (vs (vs vz))) vz ⌝
