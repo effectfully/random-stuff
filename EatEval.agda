@@ -52,9 +52,6 @@ data _⊢*_ where
 shiftᵗ : ∀ {α β γ} {Γ : Con γ} {A : Type Γ α} -> Type Γ β -> Type (Γ ▻ A) β
 shiftᵗ B = B [ ↑ ]ᵗ
 
-shift* : ∀ {α γ δ} {Γ : Con γ} {Δ : Con δ} {A : Type Γ α} -> (ψ : Δ ⊢* Γ) -> Δ ▻ A [ ψ ]ᵗ ⊢* Γ
-shift* ψ = ↑ ∘ˢ ψ
-
 _⟨_⟩ᵗ : ∀ {α β γ} {Γ : Con γ} {A : Type Γ α} -> Type (Γ ▻ A) β -> Γ ⊢ A -> Type Γ β
 
 data _⊢_ where
