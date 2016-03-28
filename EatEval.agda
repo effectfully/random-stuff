@@ -111,7 +111,7 @@ _⇒_ : ∀ {α β γ} {Γ : Con γ} -> Type Γ α -> Type Γ β -> Type Γ (α 
 A ⇒ B = π A (shiftᵗ B)
 
 ⌜_⌝ : ∀ {α γ} {Γ : Con γ} {A : Type Γ (lsuc α)}
-        {{_ : ∀ {ρ} -> ⟦ A ⟧ᵗ ρ ≡ ⟦ type α ⟧ᵗ ρ}}
+        {{_ : ∀ {ρ} -> ⟦ A ⟧ᵗ ρ ≡ Set α}}
     -> Γ ⊢ A -> Type Γ α
 ⌜ t ⌝ = ⌈ coe t ⌉
 
