@@ -6,6 +6,7 @@
 -- This is due to the `coe' constructor.
 -- If there would be `Prop' in Agda, we wouldn't need these pragmas.
 {-# OPTIONS --type-in-type --universe-polymorphism #-}
+-- Alternatively we can remove equality proofs from `coe' and use `trustMe' in ⟦_⟧.
 
 open import Level renaming (zero to lzero; suc to lsuc)
 open import Function
@@ -112,8 +113,8 @@ Term⁺ A = ∀ {γ} {Γ : Con γ} -> Γ ⊢ A
 _⇒_ : ∀ {α β γ} {Γ : Con γ} -> Type Γ α -> Type Γ β -> Type Γ (α ⊔ β)
 A ⇒ B = π A (shiftᵗ B)
 
-⌜_⌝ : ∀ {α γ} {Γ : Con γ} {A : Type Γ α}
-         {{_ : ∀ {ρ} -> ⟦ A ⟧ᵗ ρ ≡ ⟦ type α ⟧ᵗ ρ}}
+⌜_⌝ : ∀ {α γ} {Γ : Con γ} {A : Type Γ (lsuc α)}
+        {{_ : ∀ {ρ} -> ⟦ A ⟧ᵗ ρ ≡ ⟦ type α ⟧ᵗ ρ}}
     -> Γ ⊢ A -> Type Γ α
 ⌜ t ⌝ = ⌈ coe t ⌉
 
