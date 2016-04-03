@@ -239,7 +239,7 @@ abstᵏ Γ ψ = evalᵏ Γ ψ ∘ quoteᵛ
 mutual
   infer : ∀ {n m} -> Con n -> m ↤ n -> Term n -> Maybe (Value m)
   infer Γ ψ  type   = return typeᵛ
-  infer Γ ψ (π σ τ) = check Γ ψ σ typeᵛ >> check (Γ ▻ σ) (skipᵉ ψ ▷ fresh) τ typeᵛ >> return typeᵛ
+  infer Γ ψ (π σ τ) = check Γ ψ σ typeᵛ >> check (Γ ▻ σ) (keepᵉ ψ) τ typeᵛ >> return typeᵛ
   infer Γ ψ (var v) = return (eval Γ ψ (lookupᶜ v Γ))
   infer Γ ψ (ƛ σ b) = check Γ ψ σ typeᵛ >> return (suspᵛ Γ ψ σ b)
   infer Γ ψ (f · x) =
