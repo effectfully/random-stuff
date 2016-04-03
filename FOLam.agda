@@ -233,9 +233,6 @@ mutual
   norm : ∀ {n m} -> Con n -> m ↤ n -> Term n -> Term m
   norm Γ ψ = quoteᵛ ∘ eval Γ ψ
 
-abstᵏ : ∀ {n m} -> Con (suc n) -> m ↤ n -> Value (suc n) -> Kripke m
-abstᵏ Γ ψ = evalᵏ Γ ψ ∘ quoteᵛ
-
 mutual
   infer : ∀ {n m} -> Con n -> m ↤ n -> Term n -> Maybe (Value m)
   infer Γ ψ  type   = return typeᵛ
