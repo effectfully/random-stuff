@@ -130,6 +130,6 @@ I₁ = ƛ ƛ coe vz
 Aᵗ : Type⁺ (lsuc lzero)
 Aᵗ = π (type lzero)
    $ π (π ⌜ vz ⌝ $ type lzero)
-   $ π (π ⌜ vs vz ⌝ ⌜ (_·_ {B = type lzero} (coe (vs vz)) vz) ⌝)
+   $ π (π ⌜ vs vz ⌝ ⌜ _·_ {B = type lzero} (coe (vs vz)) vz ⌝)
    $ π ⌜ vs (vs vz) ⌝
    $ ⌜ _·_ {B = type lzero} (coe (vs (vs vz))) vz ⌝
