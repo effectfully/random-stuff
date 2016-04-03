@@ -107,7 +107,7 @@ Type⁺  = Term⁺
 
 data Con : ℕ -> Set where
   ε   : Con 0
-  _▻_ : ∀ {n} -> Con n -> Term n -> Con (suc n)
+  _▻_ : ∀ {n} -> Con n -> Type n -> Con (suc n)
 
 ren : Renames Term
 ren ι  type        = type
@@ -118,7 +118,7 @@ ren ι (f · x)      = ren ι f · ren ι x
 shift : ∀ {n} -> Term n -> Term (suc n)
 shift = ren top
 
-lookupᶜ : ∀ {n} -> Fin n -> Con n -> Term n
+lookupᶜ : ∀ {n} -> Fin n -> Con n -> Type n
 lookupᶜ  fzero   (Γ ▻ t) = shift t
 lookupᶜ (fsuc v) (Γ ▻ t) = shift (lookupᶜ v Γ)
 
@@ -249,7 +249,7 @@ mutual
       ;  _              -> nothing
       }
 
-  infer* : ∀ {n m} -> Con n -> m ↤ n -> Term n -> Maybe (Term m)
+  infer* : ∀ {n m} -> Con n -> m ↤ n -> Term n -> Maybe (Type m)
   infer* Γ ψ t = infer Γ ψ t >>= λ
     { (suspᵛ Δ φ σ b) -> π (norm Δ φ σ) <$> infer* (Δ ▻ σ) (keepᵉ φ) b
     ;  σ              -> just (quoteᵛ σ)
@@ -258,7 +258,7 @@ mutual
   check : ∀ {n m} -> Con n -> m ↤ n -> Term n -> Value m -> Maybe ⊤
   check Γ ψ t σ = infer* Γ ψ t >>= λ σ′ -> _ <$> σ′ ≟ quoteᵛ σ
 
-infer₀ : Term⁽⁾ -> Maybe Term⁽⁾
+infer₀ : Term⁽⁾ -> Maybe Type⁽⁾
 infer₀ = infer* ε ø
 
 check₀ : Term⁽⁾ -> Value⁽⁾ -> Maybe ⊤
