@@ -144,9 +144,9 @@ instance
 mutual
   data Value n : Set where
     typeᵛ : Value n
-    suspᵛ : ∀ {l} -> Con l -> n ↤ l -> Type l -> Term (suc l) -> Value n
-    varᵛ  : Fin   n -> Value  n
     piᵛ   : Value n -> Kripke n -> Value n
+    varᵛ  : Fin   n -> Value  n
+    suspᵛ : ∀ {l} -> Con l -> n ↤ l -> Type l -> Term (suc l) -> Value n
     _·ᵛ_  : Value n -> Value  n -> Value n
 
   data _↤_ m : ℕ -> Set where
