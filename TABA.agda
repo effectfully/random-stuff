@@ -9,6 +9,7 @@
 -- https://github.com/kwf/TABA-AWHA
 
 open import Function
+open import Relation.Binary.PropositionalEquality
 open import Data.Nat.Base
 open import Data.Product
 open import Data.Vec
@@ -33,3 +34,7 @@ convolve {n = n} {A} {B} xs ys = proj₁ (walk same xs) where
   walk  base     []      = [] , ys
   walk (step d) (x ∷ xs) with walk d xs
   ... | ps , y ∷ ys' = ((x , y) ∷ ps) , ys'
+
+test : convolve (1 ∷ 2 ∷ 3 ∷ 4 ∷ []) (5 ∷ 6 ∷ 7 ∷ 8 ∷ [])
+     ≡ (1 , 8) ∷ (2 , 7) ∷ (3 , 6) ∷ (4 , 5) ∷ []
+test = refl
