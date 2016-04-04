@@ -216,9 +216,6 @@ mutual
   suspᵛ Γ ψ σ b $ᵛ x = eval (Γ ▻ σ) (ψ ▷ x) b
   f             $ᵛ x = f ·ᵛ x
 
-eval₀ : Term⁽⁾ -> Value⁽⁾
-eval₀ = eval ε ø
-
 mutual
   quoteᵛ : Value ∸> Term
   quoteᵛ  typeᵛ          = type
@@ -254,6 +251,9 @@ mutual
 
   check : ∀ {n m} -> Con n -> m ↤ n -> Term n -> Value m -> Maybe ⊤
   check Γ ψ t σ = infer* Γ ψ t >>= λ σ′ -> _ <$> σ′ ≟ quoteᵛ σ
+
+eval₀ : Term⁽⁾ -> Value⁽⁾
+eval₀ = eval ε ø
 
 infer₀ : Term⁽⁾ -> Maybe Type⁽⁾
 infer₀ = infer* ε ø
