@@ -44,14 +44,17 @@ open import Data.Fin
 same₁ : ∀ {n} -> Diff (suc n) n 1
 same₁ = same-go suc id _
 
-lookupʳ : ∀ {n α} {A : Set α} -> Fin n -> Vec A n -> A
-lookupʳ {0}             ()
-lookupʳ {suc n} {A = A} i  = proj₂ ∘ go same₁ where
+lookupʳ₁ : ∀ {α n} {A : Set α} -> Fin (suc n) -> Vec A (suc n) -> A
+lookupʳ₁ {n = n} {A} i = proj₂ ∘ go same₁ where
   go : ∀ {m p} -> Diff (suc n) m (suc p) -> Vec A (suc m) -> Fin (suc p) × A
   go  base    (x ∷ []) = i , x
   go (step d) (x ∷ xs) with go d xs
   ... | zero  , y = zero , y
   ... | suc j , y = j    , x
+
+lookupʳ : ∀ {n α} {A : Set α} -> Fin n -> Vec A n -> A
+lookupʳ {0} ()
+lookupʳ {suc _} = lookupʳ₁
 
 lookupʳ-test₀ : lookupʳ zero (0 ∷ 1 ∷ 2 ∷ []) ≡ 2
 lookupʳ-test₀ = refl
