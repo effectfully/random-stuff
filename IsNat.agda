@@ -47,6 +47,13 @@ open HasNat {{...}}
 record IsNat {α} (A : Set α) {{hasNat : HasNat A}} : Set α where
   field
     singNat : (n : A) -> SingNat n
+
+  elimNat : ∀ {π} (P : A -> Set π)
+          -> (∀ {n} -> P n -> P (gsuc n))
+          -> P gzero
+          -> ∀ n
+          -> P n
+  elimNat P f z = elimSingNat P f z ∘ singNat
 open IsNat {{...}}
 
 instance
@@ -64,16 +71,16 @@ instance
 
 record IsNatAt {α} π (A : Set α) {{hasNat : HasNat A}} : Set (α ⊔ L.suc π) where
   field
-    elimNat : (P : A -> Set π)
-            -> (∀ {n} -> P n -> P (gsuc n))
-            -> P gzero
-            -> ∀ n
-            -> P n
+    elimNat′ : (P : A -> Set π)
+             -> (∀ {n} -> P n -> P (gsuc n))
+             -> P gzero
+             -> ∀ n
+             -> P n
 
 isNatIsNatAt : ∀ {α π} {A : Set α} {{hasNat : HasNat A}} {{isNat : IsNat A}} -> IsNatAt π A
-isNatIsNatAt = record { elimNat = λ P f z -> elimSingNat P f z ∘ singNat }
+isNatIsNatAt = record { elimNat′ = elimNat }
 
 isNatAtIsNat : ∀ {α} {A : Set α} {{hasNat : HasNat A}}
              -> (isNat : ∀ {π} -> IsNatAt π A) -> IsNat A
-isNatAtIsNat isNat = record { singNat = elimNat SingNat ssuc szero }
+isNatAtIsNat isNat = record { singNat = elimNat′ SingNat ssuc szero }
   where open IsNatAt isNat
