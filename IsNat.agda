@@ -51,26 +51,16 @@ open IsNat {{...}}
 
 instance
   hasNatℕ : HasNat ℕ
-  hasNatℕ = record
-    { gzero = 0
-    ; gsuc  = suc
-    }
+  hasNatℕ = record { gzero = 0 ; gsuc = suc }
 
   isNatℕ : IsNat ℕ
-  isNatℕ = record
-    { singNat = elimℕ SingNat ssuc szero
-    }
+  isNatℕ = record { singNat = elimℕ SingNat ssuc szero }
 
   hasNatList⊤ : HasNat (List ⊤)
-  hasNatList⊤ = record
-    { gzero = []
-    ; gsuc  = _ ∷_
-    }
+  hasNatList⊤ = record { gzero = [] ; gsuc = _ ∷_ }
 
   isNatList⊤ : IsNat (List ⊤)
-  isNatList⊤ = record
-    { singNat = elimList SingNat (const ssuc) szero
-    }
+  isNatList⊤ = record { singNat = elimList SingNat (const ssuc) szero }
 
 record IsNatAt {α} π (A : Set α) {{hasNat : HasNat A}} : Set (α ⊔ L.suc π) where
   field
