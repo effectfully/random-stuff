@@ -6,79 +6,60 @@ open import Data.Fin using (Fin; zero; suc)
 
 infixr 9 _∘ᵈ_
 
-record Diff {α} (A : ℕ -> Set α) (k : ℕ -> ℕ) : Set α where
-  no-eta-equality
-  field
-    ink  : ∀ {n} -> A (suc (k n)) -> A (k (suc n))
-    outk : ∀ {n} -> A (k (suc n)) -> A (suc (k n))
-    
-    ink-outk : ∀ {n} {x : A (k (suc n))} -> ink (outk x) ≡ x
-    outk-ink : ∀ {n} {x : A (suc (k n))} -> outk (ink x) ≡ x
+record Diff (k : ℕ -> ℕ) : Set where
+  field βk : ∀ {n} -> k (suc n) ≡ suc (k n)
 
-    -- We probably need something like
-    
-    -- unink  : ∀ {β} {B : ∀ {n} -> A n -> Set β}
-    --        -> (f : ∀ {n} -> (x : A n) -> B x) -> f (ink x) ≡ f x
-    -- unoutk : ∀ {β} {B : ∀ {n} -> A n -> Set β}
-    --        -> (f : ∀ {n} -> (x : A n) -> B x) -> f (out x) ≡ f x
+  module Kit {n α} (A : ℕ -> Set α) where
+    ink  : A (suc (k n)) -> A (k (suc n))
+    ink  = subst A (sym βk)
 
-    -- but in a suitable (i.e. universe polymorphic, but without quantification over levels) form.
-    -- Then the above equalities are derivable.
+    outk : A (k (suc n)) -> A (suc (k n))
+    outk = subst A βk
 
-DiffAt : ∀ α -> (ℕ -> ℕ) -> Set (lsuc α)
-DiffAt α k = ∀ {A} -> Diff A k
+    unink  : ∀ {β} {B : Set β} -> (f : ∀ {n} -> (x : A n) -> B) -> f ∘ ink ≗ f
+    unink  f x rewrite βk {n} = refl
 
-module DiffAt {k} (d : ∀ {α} -> DiffAt α k) {α} A = Diff (d {α} {A})
+    unoutk : ∀ {β} {B : Set β} -> (f : ∀ {n} -> (x : A n) -> B) -> f ∘ outk ≗ f 
+    unoutk f x rewrite βk {n} = refl
 
-dzero : ∀ {α} -> DiffAt α id
-dzero = record
-  { ink      = id
-  ; outk     = id
-  ; ink-outk = refl
-  ; outk-ink = refl
-  }
+    ink-outk : ink ∘ outk ≗ id
+    ink-outk x rewrite βk {n} = refl
 
-dsuc : ∀ {α k} {A : ℕ -> Set α} -> Diff A k -> Diff A (k ∘ suc)
-dsuc d = record
-  { ink      = ink
-  ; outk     = outk
-  ; ink-outk = ink-outk
-  ; outk-ink = outk-ink
-  } where open Diff d
+    outk-ink : outk ∘ ink ≗ id
+    outk-ink x rewrite βk {n} = refl
 
-dright : ∀ {α k} {A : ℕ -> Set α} -> Diff (A ∘ suc) k -> Diff A (suc ∘ k)
-dright d = record
-  { ink      = ink
-  ; outk     = outk
-  ; ink-outk = ink-outk
-  ; outk-ink = outk-ink
-  } where open Diff d
+module DiffKit {k} (d : Diff k) where
+  open Diff d public
+  open Kit public
 
-dleft : ∀ {α k} {A : ℕ -> Set α} -> Diff A (suc ∘ k) -> Diff (A ∘ suc) k
-dleft d = record
-  { ink      = ink
-  ; outk     = outk
-  ; ink-outk = ink-outk
-  ; outk-ink = outk-ink
-  } where open Diff d
+module DiffKitOver {α k} (A : ℕ -> Set α) (d : Diff k) where
+  open Diff d public
+  private open module Dummy {n} = Kit {n} A public
 
-_∘ᵈ_ : ∀ {α k₁ k₂} {A : ℕ -> Set α} -> Diff A k₂ -> Diff (A ∘ k₂) k₁ -> Diff A (k₂ ∘ k₁)
-d₂ ∘ᵈ d₁ = record
-  { ink      = ink  d₁ ∘ ink  d₂
-  ; outk     = outk d₂ ∘ outk d₁
-  ; ink-outk = trans (cong (ink  d₁) (ink-outk d₂)) (ink-outk d₁)
-  ; outk-ink = trans (cong (outk d₂) (outk-ink d₁)) (outk-ink d₂)
-  } where open Diff
+dzero : Diff id
+dzero = record { βk = refl }
 
-dnum : ∀ {α} n -> DiffAt α (n +_)
+module _ {k} (d : Diff k) where
+  open Diff d
+
+  dsucˡ : Diff (suc ∘ k)
+  dsucˡ = record { βk = cong suc βk }
+
+  dsucʳ : Diff (k ∘ suc)
+  dsucʳ = record { βk = βk }
+
+dnum : ∀ n -> Diff (n +_)
 dnum  0      = dzero
-dnum (suc n) = dright (dnum n)
+dnum (suc n) = dsucˡ (dnum n)
 
-dtop : ∀ {α} -> DiffAt α suc
+dtop : Diff suc
 dtop = dnum 1
 
-module _ {k} (d : Diff Fin k) where
-  open Diff d
+_∘ᵈ_ : ∀ {k₂ k₁} -> Diff k₂ -> Diff k₁ -> Diff (k₂ ∘ k₁)
+_∘ᵈ_ {k₂} d₂ d₁ = let open Diff in record { βk = trans (cong k₂ (βk d₁)) (βk d₂) }
+
+module _ {k} (d : Diff k) where
+  open DiffKitOver Fin d
 
   injectd : ∀ {n} -> Fin n -> Fin (k n)
   injectd  zero   = ink  zero
@@ -86,4 +67,3 @@ module _ {k} (d : Diff Fin k) where
 
 inject+′ : ∀ {n} m -> Fin n -> Fin (m + n)
 inject+′ m = injectd (dnum m)
-
