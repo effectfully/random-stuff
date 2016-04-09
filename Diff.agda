@@ -2,7 +2,7 @@ open import Function
 open import Level renaming (zero to lzero; suc to lsuc)
 open import Relation.Binary.PropositionalEquality
 open import Data.Nat.Base
-open import Data.Fin using (Fin; zero; suc)
+open import Data.Fin using (Fin; zero; suc; fromℕ)
 
 infixr 9 _∘ᵈ_
 
@@ -52,8 +52,8 @@ dnum : ∀ n -> Diff (n +_)
 dnum  0      = dzero
 dnum (suc n) = dsucˡ (dnum n)
 
-dtop : Diff suc
-dtop = dnum 1
+done : Diff suc
+done = dnum 1
 
 _∘ᵈ_ : ∀ {k₂ k₁} -> Diff k₂ -> Diff k₁ -> Diff (k₂ ∘ k₁)
 _∘ᵈ_ {k₂} d₂ d₁ = let open Diff in record { βk = trans (cong k₂ (βk d₁)) (βk d₂) }
@@ -67,3 +67,10 @@ module _ {k} (d : Diff k) where
 
 inject+′ : ∀ {n} m -> Fin n -> Fin (m + n)
 inject+′ m = injectd (dnum m)
+
+revertd : ∀ {k n} -> Diff k -> Fin n -> Fin (k n)
+revertd d  zero   = injectd d (fromℕ _)
+revertd d (suc i) = revertd (dsucʳ d) i
+
+revert : ∀ {n} -> Fin n -> Fin n
+revert = revertd dzero

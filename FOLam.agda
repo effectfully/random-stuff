@@ -273,12 +273,12 @@ A = ƛ type
   $ ƛ (var (fsuc (fsuc fzero)))
   $ var (fsuc fzero) · var fzero
 
-Aᵀ : Type⁺
-Aᵀ = π type
+Aᵗ : Type⁺
+Aᵗ = π type
    $ π (π (var fzero) type) 
    $ π (π (var (fsuc fzero)) (var (fsuc fzero) · var fzero))
    $ π (var (fsuc (fsuc fzero)))
    $ var (fsuc (fsuc fzero)) · var fzero
   
-test : infer₀ A ≡ just Aᵀ
+test : infer₀ A ≡ just Aᵗ
 test = refl
