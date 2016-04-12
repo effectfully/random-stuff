@@ -155,6 +155,9 @@ lookupᵉ : ∀ {n m} -> Fin n -> n ↦ m -> Value m
 lookupᵉ  fzero   (ψ ▷ x) = x
 lookupᵉ (fsuc i) (ψ ▷ x) = lookupᵉ i ψ
 
+lookupᵉʳ : ∀ {n m} -> Fin n -> n ↦ m -> Value m
+lookupᵉʳ = lookupᵉ ∘ revert
+
 lookupdᶜ : ∀ {k n} -> Diff k -> Fin n -> Con n -> Value (k n)
 lookupdᶜ d  fzero   (Γ ▻ x) = wkdᵛ (dsucʳ d) x
 lookupdᶜ d (fsuc v) (Γ ▻ x) = lookupdᶜ (dsucʳ d) v Γ
@@ -186,7 +189,7 @@ mutual
   ⟦_/_⟧ : ∀ {n m σ} {Γ : Con n} -> n ↦ m -> Γ ⊢ σ -> Value m
   ⟦ ψ / typeᵗ    ⟧ = typeᵛ
   ⟦ ψ / πᵗ σ τ   ⟧ = piᵛ ⟦ ψ / σ ⟧ ⟦ ψ / τ ⟧ᵏ
-  ⟦ ψ / varᵗ v   ⟧ = lookupᵉ (revert v) ψ
+  ⟦ ψ / varᵗ v   ⟧ = lookupᵉʳ v ψ
   ⟦ ψ / ƛᵗ b     ⟧ = lamᵛ ⟦ ψ / b ⟧ᵏ
   ⟦ ψ / f ·ᵗ x   ⟧ = ⟦ ψ / f ⟧ $ᵛ ⟦ ψ / x ⟧
   ⟦ ψ / coeᵗ q t ⟧ = ⟦ ψ / t ⟧
