@@ -167,7 +167,7 @@ mutual
   quoteᵛ : ∀ {n} -> Value -> Term n
   quoteᵛ      typeᵛ     = type
   quoteᵛ     (piᵛ σ τₖ) = π (quoteᵛ σ) (quoteᵏ τₖ)
-  quoteᵛ {n} (varᵛ v)   = var (trustFromℕ (n ∸ v))
+  quoteᵛ {n} (varᵛ v)   = var (trustFromℕ (n ∸ v ∸ 1))
   quoteᵛ     (lamᵛ bₖ)  = ƛ (quoteᵏ bₖ)
   quoteᵛ     (f ·ᵛ x)   = quoteᵛ f · quoteᵛ x
 
