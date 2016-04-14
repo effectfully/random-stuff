@@ -231,33 +231,33 @@ _∋_ : ∀ σ t -> _
 
 Iᵗ : Term⁺
 Iᵗ = (pi type λ A → A ⇒ A)
-  ∋ lam 2 λ A x → x
+   ∋ lam 2 λ A x → x
 
 Kᵗ : Term⁺
 Kᵗ = (pi type λ A
-  → pi (A ⇒ type) λ B
-  → pi A λ x
-  → B · x
-  ⇒ A)
-  ∋ lam 4 λ A B x y → x
+   → pi (A ⇒ type) λ B
+   → pi A λ x
+   → B · x
+   ⇒ A)
+   ∋ lam 4 λ A B x y → x
 
 Aᵗ : Term⁺
 Aᵗ = (pi type λ A
-  → pi (A ⇒ type) λ B
-  → (pi A λ x → B · x)
-  ⇒ pi A λ x
-  → B · x)
-  ∋ lam 4 λ A B f x → f · x
+   → pi (A ⇒ type) λ B
+   → (pi A λ x → B · x)
+   ⇒ pi A λ x
+   → B · x)
+   ∋ lam 4 λ A B f x → f · x
 
 Sᵗ : Term⁺
 Sᵗ = (pi type λ A
-  → pi (A ⇒ type) λ B
-  → pi (pi A λ x → B · x ⇒ type) λ C
-  → (pi A λ x → pi (B · x) λ y → C · x · y)
-  ⇒ pi (pi A λ x → B · x) λ f
-  → pi A λ x
-  → C · x · (f · x))
-  ∋ lam 6 λ A B C g f x → g · x · (f · x)
+   → pi (A ⇒ type) λ B
+   → pi (pi A λ x → B · x ⇒ type) λ C
+   → (pi A λ x → pi (B · x) λ y → C · x · y)
+   ⇒ pi (pi A λ x → B · x) λ f
+   → pi A λ x
+   → C · x · (f · x))
+   ∋ lam 6 λ A B C g f x → g · x · (f · x)
 
 test : Term⁺
 test = (pi type λ A → A ⇒ A)
