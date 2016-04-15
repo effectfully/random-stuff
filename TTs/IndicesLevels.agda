@@ -137,9 +137,6 @@ lookupᵉ (fsuc i) (ψ ▷ x) = lookupᵉ i ψ
 
 lookupᶜ = lookupᵉ
 
-lengthᵉ : ∀ {n} -> Env n -> ℕ
-lengthᵉ {n} _ = n
-
 ----------
 
 data Raw : Set where
@@ -260,5 +257,5 @@ Sᵗ = (pi type λ A
    ∋ lam 6 λ A B C g f x → g · x · (f · x)
 
 test : Term⁺
-test = (pi type λ A → A ⇒ A)
+test = (pi type λ A → Iᵗ · type · A ⇒ A)
      ∋ lam 1 λ A → Aᵗ · (A ⇒ A) · (ƛ A ⇒ A) · (Iᵗ · (A ⇒ A)) · (Iᵗ · A)

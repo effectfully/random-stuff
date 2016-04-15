@@ -18,15 +18,16 @@ data Diff n : ℕ -> ℕ -> Set where
   base : Diff n 0 n
   step : ∀ {m p} -> Diff n m (suc p) -> Diff n (suc m) p
 
-same-go : (k : ℕ -> ℕ)
-        -> (∀ {n m p} -> Diff n m (k (suc p)) -> Diff n m (suc (k p)))
-        -> (n : ℕ)
-        -> Diff (k n) n (k 0)
-same-go k coe  0      = base
-same-go k coe (suc n) = step (coe (same-go (k ∘ suc) coe n))
+gsame : ∀ {α} (A : ℕ -> ℕ -> ℕ -> Set α)
+      -> (∀ {n m p} -> A n m (suc p) -> A n (suc m) p)
+      -> (∀ {n} -> A n 0 n)
+      -> (n : ℕ)
+      -> A n n 0
+gsame A s b  0      = b
+gsame A s b (suc n) = s (gsame (λ n m p -> A (suc n) m (suc p)) s b n)
 
 same : ∀ {n} -> Diff n n 0
-same = same-go id id _
+same = gsame Diff step base _
 
 convolve : ∀ {α β n} {A : Set α} {B : Set β} -> Vec A n -> Vec B n -> Vec (A × B) n
 convolve {n = n} {A} {B} xs ys = proj₁ (walk same xs) where
@@ -35,14 +36,10 @@ convolve {n = n} {A} {B} xs ys = proj₁ (walk same xs) where
   walk (step d) (x ∷ xs) with walk d xs
   ... | ps , y ∷ ys' = ((x , y) ∷ ps) , ys'
 
-convolve-test : convolve (1 ∷ 2 ∷ 3 ∷ 4 ∷ []) (5 ∷ 6 ∷ 7 ∷ 8 ∷ [])
-              ≡ (1 , 8) ∷ (2 , 7) ∷ (3 , 6) ∷ (4 , 5) ∷ []
-convolve-test = refl
-
 open import Data.Fin
 
 same₁ : ∀ {n} -> Diff (suc n) n 1
-same₁ = same-go suc id _
+same₁ = gsame (λ n m p -> Diff (suc n) m (suc p)) step base _
 
 lookupʳ₁ : ∀ {α n} {A : Set α} -> Fin (suc n) -> Vec A (suc n) -> A
 lookupʳ₁ {n = n} {A} i = proj₂ ∘ go same₁ where
