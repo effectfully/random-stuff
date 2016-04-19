@@ -46,9 +46,17 @@ onVec : ∀ {A B S i} -> (A -> B) -> VecF A S i -> VecF B S i
 onVec f  Nil     = Nil
 onVec f (Cons x) = Cons (f x)
 
+foldr : ∀ {A n}
+      -> (B : ℕ -> Set)
+      -> (∀ {n} -> A -> B n -> B (suc n))
+      -> B 0
+      -> Vec A n
+      -> B n
+foldr B f z (call  Nil     k) = z
+foldr B f z (call (Cons x) k) = f x (foldr B f z (k refl))
+
 toList : ∀ {A n} -> Vec A n -> List A
-toList (call  Nil     k) = List.[]
-toList (call (Cons x) k) = x List.∷ toList (k refl)
+toList = foldr _ List._∷_ List.[]
 
 test : toList (fmap (onVec suc) (1 ∷ 2 ∷ 3 ∷ [])) ≡ toList (2 ∷ 3 ∷ 4 ∷ [])
 test = refl
