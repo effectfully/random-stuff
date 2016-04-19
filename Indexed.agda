@@ -4,13 +4,8 @@ open import Function
 open import Relation.Binary.PropositionalEquality
 open import Data.Empty
 
-infix 0 _▷_
-
-_▷_ : Set -> Set -> Set
-I ▷ O = (I -> Set) -> O -> Set
-
 Indexed : Set -> Set
-Indexed I = I ▷ I
+Indexed I = (I -> Set) -> I -> Set
 
 data IWer {I} (Ψ : Indexed I) : I -> Set where
   call : ∀ {S i} -> Ψ S i -> (∀ {i′} -> S i′ -> IWer Ψ i′) -> IWer Ψ i
