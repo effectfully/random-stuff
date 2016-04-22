@@ -166,7 +166,7 @@ mutual
   quoteᵛ n (f ·ᵛ x)   = quoteᵛ n f ·ʳ quoteᵛ n x
 
   quoteᵏ : ∀ n -> Kripke -> Raw
-  quoteᵏ n k = quoteᵛ n (k (varᵛ n))
+  quoteᵏ n k = quoteᵛ (suc n) (k (varᵛ n))
 
 ----------
 
