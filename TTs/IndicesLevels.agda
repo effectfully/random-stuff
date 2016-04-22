@@ -157,6 +157,9 @@ instance
     go (f₁ ·ʳ x₁) (f₂ ·ʳ x₂) = cong₂ _·ʳ_ <$> go f₁ f₂ ⊛ go x₁ x₂
     go  _          _         = nothing
 
+lengthᵉ : ∀ {n} -> Env n -> ℕ
+lengthᵉ {n} _ = n
+
 mutual
   quoteᵛ : ∀ n -> Value -> Raw
   quoteᵛ n  typeᵛ     = typeʳ
@@ -168,17 +171,15 @@ mutual
   quoteᵏ : ∀ n -> Kripke -> Raw
   quoteᵏ n k = quoteᵛ (suc n) (k (varᵛ n))
 
-----------
-
 mutual
   data _⊢_ {n} (Γ : Con n) : Value -> Set where
-    typeᵗ  : Γ ⊢ typeᵛ
-    πᵗ     : (σₜ : Γ ⊢ typeᵛ) -> Γ ▷ eval σₜ ⊢ typeᵛ -> Γ ⊢ typeᵛ
-    varᵗ   : ∀ v -> Γ ⊢ lookupᶜ v Γ
-    ƛᵗ     : ∀ {σ τₖ} -> Γ ▷ σ ⊢ τₖ (varᵛ n) -> Γ ⊢ piᵛ σ τₖ
-    _·ᵗ_   : ∀ {σ τₖ} -> Γ ⊢ piᵛ σ τₖ -> (xₜ : Γ ⊢ σ) -> Γ ⊢ τₖ (eval xₜ)
-    coeᵗ   : ∀ {σ τ} -> quoteᵛ n σ ≡ quoteᵛ n τ -> Γ ⊢ σ -> Γ ⊢ τ
-    shiftᵗ : ∀ {σ} -> ø ⊢ σ -> Γ ⊢ σ
+    typeᵗ : Γ ⊢ typeᵛ
+    πᵗ    : (σₜ : Γ ⊢ typeᵛ) -> Γ ▷ eval σₜ ⊢ typeᵛ -> Γ ⊢ typeᵛ
+    varᵗ  : ∀ v -> Γ ⊢ lookupᶜ v Γ
+    ƛᵗ    : ∀ {σ τₖ} -> Γ ▷ σ ⊢ τₖ (varᵛ n) -> Γ ⊢ piᵛ σ τₖ
+    _·ᵗ_  : ∀ {σ τₖ} -> Γ ⊢ piᵛ σ τₖ -> (xₜ : Γ ⊢ σ) -> Γ ⊢ τₖ (eval xₜ)
+    coeᵗ  : ∀ {σ τ} -> quoteᵛ n σ ≡ quoteᵛ n τ -> Γ ⊢ σ -> Γ ⊢ τ
+    wkᵗ   : ∀ {σ} -> ø ⊢ σ -> Γ ⊢ σ
 
   ⟦_/_⟧ : ∀ {n σ} {Γ : Con n} -> Env n -> Γ ⊢ σ -> Value
   ⟦ ψ / typeᵗ    ⟧ = typeᵛ
@@ -187,7 +188,7 @@ mutual
   ⟦ ψ / ƛᵗ b     ⟧ = lamᵛ ⟦ ψ / b ⟧ᵏ
   ⟦ ψ / f ·ᵗ x   ⟧ = ⟦ ψ / f ⟧ $ᵛ ⟦ ψ / x ⟧
   ⟦ ψ / coeᵗ q t ⟧ = ⟦ ψ / t ⟧
-  ⟦ ψ / shiftᵗ t ⟧ = eval t
+  ⟦ ψ / wkᵗ t    ⟧ = eval t
 
   ⟦_/_⟧ᵏ : ∀ {n σ τ} {Γ : Con n} -> Env n -> Γ ▷ σ ⊢ τ -> Kripke
   ⟦ ψ / t ⟧ᵏ x = ⟦ ψ ▷ x / t ⟧
@@ -204,7 +205,7 @@ coerceᵗ {n} {σ} {τ} t = flip coeᵗ t <$> quoteᵛ n σ ≟ quoteᵛ n τ
 
 mutual
   infer : ∀ {n} {Γ : Con n} -> Term n -> Maybe (∃ (Γ ⊢_))
-  infer (pure (, t)) = just (, shiftᵗ t)
+  infer (pure (, t)) = just (, wkᵗ t)
   infer  type        = return (, typeᵗ)
   infer (π σ τ)      = check σ typeᵛ >>= λ σₜ -> (λ τₜ -> , πᵗ σₜ τₜ) <$> check τ typeᵛ
   infer (var v)      = return (, varᵗ v)
