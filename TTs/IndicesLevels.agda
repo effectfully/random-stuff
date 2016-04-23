@@ -198,7 +198,7 @@ mutual
 
 ----------
 
-open TermWith (∃ (ø ⊢_)) public
+open TermWith (∃ (ø ⊢_))
 
 coerceᵗ : ∀ {n σ τ} {Γ : Con n} -> Γ ⊢ σ -> Maybe (Γ ⊢ τ)
 coerceᵗ {n} {σ} {τ} t = flip coeᵗ t <$> quoteᵛ n σ ≟ quoteᵛ n τ
