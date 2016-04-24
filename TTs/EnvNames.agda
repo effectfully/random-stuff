@@ -203,7 +203,7 @@ mutual
   ⟦ φ / coeᵗ q t     ⟧ = ⟦ φ / t ⟧
   ⟦ φ / wkᵗ t        ⟧ = eval t
 
-  ⟦_/_⟧ᵏ : ∀ {l ψ σ τ v} {Γ : Con l} -> Env l -> Γ ▷ σ & ψ ▷ v ⊢ τ -> Kripke
+  ⟦_/_⟧ᵏ : ∀ {l ψ τ} {Γ : Con (suc l)} -> Env l -> Γ & ψ ⊢ τ -> Kripke
   ⟦ φ / t ⟧ᵏ x = ⟦ φ ▷ x / t ⟧
 
   eval : ∀ {l ψ σ} {Γ : Con l} -> Γ & ψ ⊢ σ -> Value

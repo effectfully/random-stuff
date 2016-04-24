@@ -211,7 +211,7 @@ mutual
   ⟦ ψ / coeᵗ q t     ⟧ = ⟦ ψ / t ⟧
   ⟦ ψ / wkᵗ t        ⟧ = eval t
 
-  ⟦_/_⟧ᵏ : ∀ {l n σ τ} {ns : Names l} {Γ : Con ns} -> Env l -> Γ ▻ σ ∋ n ⊢ τ -> Kripke
+  ⟦_/_⟧ᵏ : ∀ {l τ} {ns : Names (suc l)} {Γ : Con ns} -> Env l -> Γ ⊢ τ -> Kripke
   ⟦ ψ / t ⟧ᵏ x = ⟦ ψ ▷ x / t ⟧
 
   eval : ∀ {l σ} {ns : Names l} {Γ : Con ns} -> Γ ⊢ σ -> Value
