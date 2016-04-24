@@ -27,8 +27,8 @@ infixl 1 _>>=ᵀ_ _>>=ᵗ_
 
 infixr 6 ƛʳ_
 infixl 7 _·ʳ_
-infixl 5 _▻_∋_ _▷_
-infix  4 _⊢_
+infixl 5 _▷_
+infix  4 _&_⊢_
 infixl 2 _∋_
 
 pattern ,_ y  = _ , y
@@ -170,62 +170,54 @@ mutual
 
 ----------
 
-data Con : ∀ {l} -> Vec String l -> Set where
-  ε     : Con []
-  _▻_∋_ : ∀ {l} {ns : Names l} -> Con ns -> Value -> ∀ n -> Con (n ∷ ns)
-
 data Env : ℕ -> Set where
   ø   : Env 0
   _▷_ : ∀ {n} -> Env n -> Value -> Env (suc n)
 
-lookupᶜ : ∀ {l} {ns : Names l} -> Fin l -> Con ns -> Value
-lookupᶜ  fzero   (Γ ▻ σ ∋ n) = σ
-lookupᶜ (fsuc i) (Γ ▻ σ ∋ n) = lookupᶜ i Γ
+Con = Env
 
 lookupᵉ : ∀ {n} -> Fin n -> Env n -> Value
 lookupᵉ  fzero   (ψ ▷ x) = x
 lookupᵉ (fsuc i) (ψ ▷ x) = lookupᵉ i ψ
 
-stopᵉ : ∀ {l} {ns : Names l} -> Con ns -> Env l
-stopᵉ          ε          = ø
-stopᵉ {suc l} (Γ ▻ σ ∋ n) = stopᵉ Γ ▷ varᵛ l n
+lookupᶜ = lookupᵉ
 
 ----------
 
 mutual
-  data _⊢_ {l} {ns : Names l} (Γ : Con ns) : Value -> Set where
-    typeᵗ   : Γ ⊢ typeᵛ
-    ⟨_∶_⟩ᵗ_ : ∀ n -> (σₜ : Γ ⊢ typeᵛ) -> Γ ▻ eval σₜ ∋ n ⊢ typeᵛ -> Γ ⊢ typeᵛ
-    varᵗ    : ∀ v -> Γ ⊢ lookupᶜ v Γ
-    λ⟨_⟩ᵗ_  : ∀ {m σ τₖ} n -> Γ ▻ σ ∋ n ⊢ τₖ (varᵛ l m) -> Γ ⊢ piᵛ m σ τₖ
-    _·ᵗ_    : ∀ {n σ τₖ} -> Γ ⊢ piᵛ n σ τₖ -> (xₜ : Γ ⊢ σ) -> Γ ⊢ τₖ (eval xₜ)
-    coeᵗ    : ∀ {σ τ} -> quoteᵛ l σ ≡ quoteᵛ l τ -> Γ ⊢ σ -> Γ ⊢ τ
-    wkᵗ     : ∀ {σ} -> ε ⊢ σ -> Γ ⊢ σ
+  data _&_⊢_ {l} (Γ : Con l) (ψ : Env l) : Value -> Set where
+    typeᵗ   : Γ & ψ ⊢ typeᵛ
+    ⟨_∶_⟩ᵗ_ : ∀ n -> (σₜ : Γ & ψ ⊢ typeᵛ) -> Γ ▷ eval σₜ & ψ ▷ varᵛ l n ⊢ typeᵛ -> Γ & ψ ⊢ typeᵛ
+    varᵗ    : ∀ v -> Γ & ψ ⊢ lookupᶜ v Γ
+    λ⟨_⟩ᵗ_  : ∀ {m σ τₖ} n -> Γ ▷ σ & ψ ▷ varᵛ l n ⊢ τₖ (varᵛ l m) -> Γ & ψ ⊢ piᵛ m σ τₖ
+    _·ᵗ_    : ∀ {n σ τₖ} -> Γ & ψ ⊢ piᵛ n σ τₖ -> (xₜ : Γ & ψ ⊢ σ) -> Γ & ψ ⊢ τₖ (eval xₜ)
+    coeᵗ    : ∀ {σ τ} -> quoteᵛ l σ ≡ quoteᵛ l τ -> Γ & ψ ⊢ σ -> Γ & ψ ⊢ τ
+    wkᵗ     : ∀ {σ} -> ø & ø ⊢ σ -> Γ & ψ ⊢ σ
 
-  ⟦_/_⟧ : ∀ {l σ} {ns : Names l} {Γ : Con ns} -> Env l -> Γ ⊢ σ -> Value
-  ⟦ ψ / typeᵗ        ⟧ = typeᵛ
-  ⟦ ψ / ⟨ n ∶ σ ⟩ᵗ τ ⟧ = piᵛ n ⟦ ψ / σ ⟧ ⟦ ψ / τ ⟧ᵏ
-  ⟦ ψ / varᵗ v       ⟧ = lookupᵉ v ψ
-  ⟦ ψ / λ⟨ n ⟩ᵗ b    ⟧ = lamᵛ n ⟦ ψ / b ⟧ᵏ
-  ⟦ ψ / f ·ᵗ x       ⟧ = ⟦ ψ / f ⟧ $ᵛ ⟦ ψ / x ⟧
-  ⟦ ψ / coeᵗ q t     ⟧ = ⟦ ψ / t ⟧
-  ⟦ ψ / wkᵗ t        ⟧ = eval t
+  ⟦_/_⟧ : ∀ {l ψ σ} {Γ : Con l} -> Env l -> Γ & ψ ⊢ σ -> Value
+  ⟦ φ / typeᵗ        ⟧ = typeᵛ
+  ⟦ φ / ⟨ n ∶ σ ⟩ᵗ τ ⟧ = piᵛ n ⟦ φ / σ ⟧ ⟦ φ / τ ⟧ᵏ
+  ⟦ φ / varᵗ v       ⟧ = lookupᵉ v φ
+  ⟦ φ / λ⟨ n ⟩ᵗ b    ⟧ = lamᵛ n ⟦ φ / b ⟧ᵏ
+  ⟦ φ / f ·ᵗ x       ⟧ = ⟦ φ / f ⟧ $ᵛ ⟦ φ / x ⟧
+  ⟦ φ / coeᵗ q t     ⟧ = ⟦ φ / t ⟧
+  ⟦ φ / wkᵗ t        ⟧ = eval t
 
-  ⟦_/_⟧ᵏ : ∀ {l n σ τ} {ns : Names l} {Γ : Con ns} -> Env l -> Γ ▻ σ ∋ n ⊢ τ -> Kripke
-  ⟦ ψ / t ⟧ᵏ x = ⟦ ψ ▷ x / t ⟧
+  ⟦_/_⟧ᵏ : ∀ {l ψ σ τ v} {Γ : Con l} -> Env l -> Γ ▷ σ & ψ ▷ v ⊢ τ -> Kripke
+  ⟦ φ / t ⟧ᵏ x = ⟦ φ ▷ x / t ⟧
 
-  eval : ∀ {l σ} {ns : Names l} {Γ : Con ns} -> Γ ⊢ σ -> Value
-  eval {Γ = Γ} t = ⟦ stopᵉ Γ / t ⟧
+  eval : ∀ {l ψ σ} {Γ : Con l} -> Γ & ψ ⊢ σ -> Value
+  eval {ψ = ψ} t = ⟦ ψ / t ⟧
 
 ----------
 
-open TermWith (∃ (ε ⊢_))
+open TermWith (∃ (ø & ø ⊢_))
 
-coerceᵗ : ∀ {l σ τ} {ns : Names l} {Γ : Con ns} -> Γ ⊢ σ -> Maybe (Γ ⊢ τ)
+coerceᵗ : ∀ {l σ τ ψ} {Γ : Con l} -> Γ & ψ ⊢ σ -> Maybe (Γ & ψ ⊢ τ)
 coerceᵗ {l} {σ} {τ} t = flip coeᵗ t <$> quoteᵛ l σ ≟ quoteᵛ l τ
 
 mutual
-  infer : ∀ {l} {ns : Names l} {Γ : Con ns} -> Term ns -> Maybe (∃ (Γ ⊢_))
+  infer : ∀ {l ψ} {ns : Names l} {Γ : Con l} -> Term ns -> Maybe (∃ (Γ & ψ ⊢_))
   infer (pure (, t))  = just (, wkᵗ t)
   infer  type         = just (, typeᵗ)
   infer (⟨ n ∶ σ ⟩ τ) = check σ typeᵛ >>= λ σₜ -> (λ τₜ -> , ⟨ n ∶ σₜ ⟩ᵗ τₜ) <$> check τ typeᵛ
@@ -236,7 +228,7 @@ mutual
     ;  _                -> nothing
     }
 
-  check : ∀ {l} {ns : Names l} {Γ : Con ns} -> Term ns -> (σ : Value) -> Maybe (Γ ⊢ σ)
+  check : ∀ {l ψ} {ns : Names l} {Γ : Con l} -> Term ns -> (σ : Value) -> Maybe (Γ & ψ ⊢ σ)
   check {l} (λ⟨ n ⟩ b) (piᵛ m σ τₖ) = λ⟨ n ⟩ᵗ_ <$> check b (τₖ (varᵛ l m))
   check      t          σ           = infer t >>= coerceᵗ ∘ proj₂
 
@@ -245,7 +237,7 @@ typecheck : Term⁽⁾ -> Value -> Maybe Term⁺
 typecheck t σ = (λ tₜ {_ _} -> pure (, tₜ)) <$> check t σ 
 
 _∋_ : ∀ σ t -> _
-σ ∋ t = check {Γ = ε} σ typeᵛ >>=ᵗ λ σₜ -> typecheck t (eval σₜ) >>=ᵗ id
+σ ∋ t = check {ψ = ø} {[]} {ø} σ typeᵛ >>=ᵗ λ σₜ -> typecheck t (eval σₜ) >>=ᵗ id
 
 ----------
 
