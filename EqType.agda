@@ -25,15 +25,15 @@ nat    ==ᵗ nat    = true
 list a ==ᵗ list b = a ==ᵗ b
 _      ==ᵗ _      = false
 
-data Repr : Set -> Set where
-  repr : ∀ a -> Repr ⟦ a ⟧
+data Code : Set -> Set where
+  code : ∀ a -> Code ⟦ a ⟧
 
 instance
-  irepr : ∀ {a} -> Repr ⟦ a ⟧
-  irepr = repr _
+  icode : ∀ {a} -> Code ⟦ a ⟧
+  icode = code _
 
-_==ᵀ_ : ∀ A B {{_ : Repr A}} {{_ : Repr B}} -> Bool
-_==ᵀ_ _ _ {{repr a}} {{repr b}} = a ==ᵗ b
+_==ᵀ_ : ∀ A B {{_ : Code A}} {{_ : Code B}} -> Bool
+_==ᵀ_ _ _ {{code a}} {{code b}} = a ==ᵗ b
 
 test-bool : Bool ==ᵀ Bool ≡ true
 test-bool = refl
