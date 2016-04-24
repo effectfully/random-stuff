@@ -26,11 +26,7 @@ list a ==ᵗ list b = a ==ᵗ b
 _      ==ᵗ _      = false
 
 data Code : Set -> Set where
-  code : ∀ a -> Code ⟦ a ⟧
-
-instance
-  icode : ∀ {a} -> Code ⟦ a ⟧
-  icode = code _
+  instance code : ∀ a -> Code ⟦ a ⟧
 
 _==ᵀ_ : ∀ A B {{_ : Code A}} {{_ : Code B}} -> Bool
 _==ᵀ_ _ _ {{code a}} {{code b}} = a ==ᵗ b
