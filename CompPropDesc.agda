@@ -5,22 +5,20 @@ open import Data.Product
 
 data Desc {ι} (I : Set ι) : Set (lsuc lzero ⊔ ι) where
   var : I -> Desc I
-  σ π : (A : Set) -> (A -> Desc I) -> Desc I
+  π   : (A : Set) -> (A -> Desc I) -> Desc I
   _&_ : Desc I -> Desc I -> Desc I
 
 ⟦_⟧ : ∀ {ι} {I : Set ι} -> Desc I -> (I -> Set ι) -> Set ι
 ⟦ var i ⟧ F = F i
-⟦ σ A B ⟧ F = ∃ λ x -> ⟦ B x ⟧ F
-⟦ π A B ⟧ F = ∀   x -> ⟦ B x ⟧ F
+⟦ π A B ⟧ F = ∀ x -> ⟦ B x ⟧ F
 ⟦ D & E ⟧ F = ⟦ D ⟧ F × ⟦ E ⟧ F
 
 Extend : ∀ {ι} {I : Set ι} -> Desc I -> (I -> Set ι) -> I -> Set ι
 Extend (var j) F i = j ≡ i
-Extend (σ A B) F i = ∃ λ x -> Extend (B x) F i
-Extend (π A B) F i = ∀   x -> ⟦ B x ⟧ F
+Extend (π A B) F i = ∃ λ x -> Extend (B x) F i
 Extend (D & E) F i = ⟦ D ⟧ F × Extend E F i
 
-record μ {I} (D : Desc I) i : Set where
+record μ {ι} {I : Set ι} (D : Desc I) i : Set ι where
   inductive
   constructor node
   field knot : Extend D (μ D) i
@@ -32,7 +30,7 @@ open import Data.Bool.Base
 open import Data.Nat.Base
 
 Vec : Set -> ℕ -> Set
-Vec A = μ $ σ Bool λ b -> if b then var 0 else σ ℕ λ n -> σ A λ _ -> var n & var (suc n)
+Vec A = μ $ π Bool λ b -> if b then var 0 else π ℕ λ n -> π A λ _ -> var n & var (suc n)
 
 pattern []ᵥ           = node (true , refl)
 pattern _∷ᵥ_ {n} x xs = node (false , n , x , xs , refl)
@@ -49,9 +47,9 @@ elimVec P f z (x ∷ᵥ xs) = f x (elimVec P f z xs)
 
 
 W : (A : Set) -> (A -> Set) -> Set
-W A B = μ (σ A λ x -> π (B x) λ _ -> var tt) tt
+W A B = μ (π A λ x -> (π (B x) λ _ -> var tt) & var tt) tt
 
-pattern sup x g = node (x , g)
+pattern sup x g = node (x , g , refl)
 
 {-# TERMINATING #-} -- Why?
 elimW : ∀ {π A B}
