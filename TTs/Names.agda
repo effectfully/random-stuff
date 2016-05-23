@@ -197,7 +197,7 @@ mutual
     typeᵗ   : Γ ⊢ typeᵛ
     ⟨_∶_⟩ᵗ_ : ∀ n -> (σₜ : Γ ⊢ typeᵛ) -> Γ ▻ eval σₜ ∋ n ⊢ typeᵛ -> Γ ⊢ typeᵛ
     varᵗ    : ∀ v -> Γ ⊢ lookupᶜ v Γ
-    λ⟨_⟩ᵗ_  : ∀ {m σ τₖ} n -> Γ ▻ σ ∋ n ⊢ τₖ (varᵛ l m) -> Γ ⊢ piᵛ m σ τₖ
+    λ⟨_⟩ᵗ_  : ∀ {m σ τₖ} n -> Γ ▻ σ ∋ n ⊢ τₖ (varᵛ l n) -> Γ ⊢ piᵛ m σ τₖ
     _·ᵗ_    : ∀ {n σ τₖ} -> Γ ⊢ piᵛ n σ τₖ -> (xₜ : Γ ⊢ σ) -> Γ ⊢ τₖ (eval xₜ)
     coeᵗ    : ∀ {σ τ} -> quoteᵛ l σ ≡ quoteᵛ l τ -> Γ ⊢ σ -> Γ ⊢ τ
     wkᵗ     : ∀ {σ} -> ε ⊢ σ -> Γ ⊢ σ
@@ -237,7 +237,7 @@ mutual
     }
 
   check : ∀ {l} {ns : Names l} {Γ : Con ns} -> Term ns -> (σ : Value) -> Maybe (Γ ⊢ σ)
-  check {l} (λ⟨ n ⟩ b) (piᵛ m σ τₖ) = λ⟨ n ⟩ᵗ_ <$> check b (τₖ (varᵛ l m))
+  check {l} (λ⟨ n ⟩ b) (piᵛ m σ τₖ) = λ⟨ n ⟩ᵗ_ <$> check b (τₖ (varᵛ l n))
   check      t          σ           = infer t >>= coerceᵗ ∘ proj₂
 
 -- Double hidden-lambda bug.
