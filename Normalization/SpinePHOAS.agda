@@ -36,15 +36,13 @@ module NonStrictilyPositive where
   apply : ∀ {A σ} -> Term (Knot A) σ -> Spine (Knot A) σ -> Term (Knot A) ⋆
   apply  x       ø       = x
   apply (lam k) (x ◁ xs) = apply (k (tie x)) xs
-  
-  {-# NON_TERMINATING #-}
+
   norm : ∀ {A σ} -> Term (Knot A) σ -> Term (Knot A) σ
   norm  unit            = unit
   norm (lam k)          = lam λ x -> norm (k x)
   norm (app (var f) xs) = app (var f) (mapSpine norm xs)
   norm (app (tie f) xs) = apply (norm f) (mapSpine norm xs)
 
-  {-# NON_TERMINATING #-}
   flatten : ∀ {A σ} -> Term (Knot A) σ -> Term A σ
   flatten  unit            = unit
   flatten (lam k)          = lam λ x -> flatten (k (var x))
