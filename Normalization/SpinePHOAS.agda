@@ -34,7 +34,7 @@ module NonStrictilyPositive where
     tie : Term (Knot A) σ -> Knot A σ
 
   apply : ∀ {A σ} -> Term (Knot A) σ -> Spine (Knot A) σ -> Term (Knot A) ⋆
-  apply  x       ø       = x
+  apply  t       ø       = t
   apply (lam k) (x ◁ xs) = apply (k (tie x)) xs
 
   norm : ∀ {A σ} -> Term (Knot A) σ -> Term (Knot A) σ
@@ -64,8 +64,8 @@ module StrictlyPositive where
     eval (app f xs) = apply f xs
 
     apply : ∀ {A σ} -> ⟦ A / σ ⟧ -> Spine ⟦ A /_⟧ σ -> Term A ⋆
-    apply k (x ◁ xs) = apply (k (eval x)) xs
     apply t  ø       = t
+    apply k (x ◁ xs) = apply (k (eval x)) xs
 
   mutual
     η* : ∀ {τ A} σ -> (Spine A σ -> Spine A τ) -> A τ -> ⟦ A / σ ⟧
