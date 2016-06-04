@@ -37,25 +37,18 @@ mutual
     π   : ∀ {α β} -> (A : Type α) -> (⟦ A ⟧ -> UntiedDesc I ω β) -> UntiedDesc I ω (α ⊔ β)
     _⊛_ : ∀ {α β} -> UntiedDesc I ω α -> UntiedDesc I ω β -> UntiedDesc I ω (α ⊔ β)
 
-  record Desc {ι} (I : Type ι) α : Set where
-    constructor tie
-    field untie : UntiedDesc I α α
+  Desc : ∀ {ι} -> Type ι -> Level -> Set
+  Desc I α = UntiedDesc I α α
 
-  ⟦_⟧ᵁᴰ : ∀ {ι ω α} {I : Type ι} -> UntiedDesc I ω α -> (⟦ I ⟧ -> Set) -> Set
-  ⟦ var i ⟧ᵁᴰ F = F i
-  ⟦ π A D ⟧ᵁᴰ F = ∀ x -> ⟦ D x ⟧ᵁᴰ F
-  ⟦ D ⊛ E ⟧ᵁᴰ F = ⟦ D ⟧ᵁᴰ F × ⟦ E ⟧ᵁᴰ F
+  ⟦_⟧ᴰ : ∀ {ι ω α} {I : Type ι} -> UntiedDesc I ω α -> (⟦ I ⟧ -> Set) -> Set
+  ⟦ var i ⟧ᴰ F = F i
+  ⟦ π A D ⟧ᴰ F = ∀ x -> ⟦ D x ⟧ᴰ F
+  ⟦ D ⊛ E ⟧ᴰ F = ⟦ D ⟧ᴰ F × ⟦ E ⟧ᴰ F
 
-  ⟦_⟧ᴰ : ∀ {ι α} {I : Type ι} -> Desc I α -> (⟦ I ⟧ -> Set) -> Set
-  ⟦ tie D ⟧ᴰ = ⟦ D ⟧ᵁᴰ
-
-  Extendᵁ : ∀ {ι ω α} {I : Type ι} -> UntiedDesc I ω α -> (⟦ I ⟧ -> Set) -> ⟦ I ⟧ -> Set
-  Extendᵁ (var j) F i = j ≡ i
-  Extendᵁ (π A D) F i = ∃ λ x -> Extendᵁ (D x) F i
-  Extendᵁ (D ⊛ E) F i = ⟦ D ⟧ᵁᴰ F × Extendᵁ E F i
-
-  Extend : ∀ {ι α} {I : Type ι} -> Desc I α -> (⟦ I ⟧ -> Set) -> ⟦ I ⟧ -> Set
-  Extend (tie D) = Extendᵁ D
+  Extend : ∀ {ι ω α} {I : Type ι} -> UntiedDesc I ω α -> (⟦ I ⟧ -> Set) -> ⟦ I ⟧ -> Set
+  Extend (var j) F i = j ≡ i
+  Extend (π A D) F i = ∃ λ x -> Extend (D x) F i
+  Extend (D ⊛ E) F i = ⟦ D ⟧ᴰ F × Extend E F i
 
   record μ {ι α} {I : Type ι} (D : Desc I α) i : Set where
     inductive
@@ -70,7 +63,7 @@ pattern !#₀ p = node (tt , p)
 pattern !#₁ p = node (just tt , p)
 
 fin : ℕ -> Type lzero
-fin = mu nat ∘ tie $ π (enum 2) λ
+fin = mu nat $ π (enum 2) λ
           {  nothing  -> π nat λ n -> var (suc n)
           ; (just tt) -> π nat λ n -> var n ⊛ var (suc n)
           }
@@ -93,7 +86,7 @@ elimFin P f z (fsuc i) = f (elimFin P f z i)
 
 
 vec : ∀ {α} -> Type α -> ℕ -> Type α
-vec A = mu nat ∘ tie $ π (enum 2) λ
+vec A = mu nat $ π (enum 2) λ
           {  nothing  -> var 0
           ; (just tt) -> π nat λ n -> π A λ _ -> var n ⊛ var (suc n)
           }
