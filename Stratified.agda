@@ -1,3 +1,5 @@
+-- No levitation, but we can perhaps live without it.
+
 {-# OPTIONS --no-positivity-check #-}
 
 open import Level renaming (zero to lzero; suc to lsuc)
@@ -8,6 +10,9 @@ open import Data.Unit.Base
 open import Data.Nat.Base hiding (_⊔_)
 open import Data.Maybe.Base
 open import Data.Product
+open import Data.List.Base
+
+infixr 5 _⊛_ _⇨_
 
 Enum : ℕ -> Set
 Enum  0            = ⊥
@@ -16,14 +21,16 @@ Enum (suc (suc n)) = Maybe (Enum (suc n))
 
 mutual
   data Type : Level -> Set where
-    nat  : Type lzero
-    enum : ℕ -> Type lzero
-    type : ∀ α -> Type (lsuc α)
-    π σ  : ∀ {α β} -> (A : Type α) -> (⟦ A ⟧ -> Type β) -> Type (α ⊔ β)
-    desc : ∀ {ι} -> Type ι -> ∀ α -> Type α
-    mu   : ∀ {ι α} -> (I : Type ι) -> Desc I α -> ⟦ I ⟧ -> Type α
+    level : Type lzero
+    nat   : Type lzero
+    enum  : ℕ -> Type lzero
+    type  : ∀ α -> Type (lsuc α)
+    π σ   : ∀ {α β} -> (A : Type α) -> (⟦ A ⟧ -> Type β) -> Type (α ⊔ β)
+    desc  : ∀ {ι} -> Type ι -> ∀ α -> Type α
+    mu    : ∀ {ι α} -> (I : Type ι) -> Desc I α -> ⟦ I ⟧ -> Type α
 
   ⟦_⟧ : ∀ {α} -> Type α -> Set
+  ⟦ level    ⟧ = Level
   ⟦ nat      ⟧ = ℕ
   ⟦ enum n   ⟧ = Enum n
   ⟦ type α   ⟧ = Type α
@@ -32,13 +39,13 @@ mutual
   ⟦ desc I α ⟧ = Desc I α
   ⟦ mu I D i ⟧ = μ D i
 
-  data UntiedDesc {ι} (I : Type ι) ω : Level -> Set where
-    var : ⟦ I ⟧ -> UntiedDesc I ω ω
-    π   : ∀ {α β} -> (A : Type α) -> (⟦ A ⟧ -> UntiedDesc I ω β) -> UntiedDesc I ω (α ⊔ β)
-    _⊛_ : ∀ {α β} -> UntiedDesc I ω α -> UntiedDesc I ω β -> UntiedDesc I ω (α ⊔ β)
-
   Desc : ∀ {ι} -> Type ι -> Level -> Set
   Desc I α = UntiedDesc I α α
+
+  data UntiedDesc {ι} (I : Type ι) ω : Level -> Set where
+    var : ⟦ I ⟧ -> Desc I ω
+    π   : ∀ {α β} -> (A : Type α) -> (⟦ A ⟧ -> UntiedDesc I ω β) -> UntiedDesc I ω (α ⊔ β)
+    _⊛_ : ∀ {α β} -> UntiedDesc I ω α -> UntiedDesc I ω β -> UntiedDesc I ω (α ⊔ β)
 
   ⟦_⟧ᴰ : ∀ {ι ω α} {I : Type ι} -> UntiedDesc I ω α -> (⟦ I ⟧ -> Set) -> Set
   ⟦ var i ⟧ᴰ F = F i
@@ -55,18 +62,34 @@ mutual
     constructor node
     field knot : Extend D (μ D) i
 
+_⇨_ : ∀ {ι ω α β} {I : Type ι} -> Type α -> UntiedDesc I ω β -> UntiedDesc I ω (α ⊔ β)
+A ⇨ D = π A λ _ -> D
 
-pattern #₀ p = node (nothing , p)
-pattern #₁ p = node (just nothing , p)
 
-pattern !#₀ p = node (tt , p)
-pattern !#₁ p = node (just tt , p)
+
+pattern #₀ p = node (nothing             , p)
+pattern #₁ p = node (just  nothing       , p)
+pattern #₂ p = node (just (just nothing) , p)
+
+pattern !#₀ p = node (tt             , p)
+pattern !#₁ p = node (just  tt       , p)
+pattern !#₂ p = node (just (just tt) , p)
+
+fromList : ∀ {ι α} {I : Type ι} -> List (Desc I α) -> Desc I α
+fromList {α = α} {I} Ds = π (enum (length Ds)) (go Ds) where
+  go : (Ds : List (Desc I α)) -> Enum (length Ds) -> Desc I α
+  go  []           ()
+  go (D ∷ [])      tt      = D
+  go (D ∷ E ∷ Ds)  nothing = D
+  go (D ∷ E ∷ Ds) (just e) = go (E ∷ Ds) e
+
+
 
 fin : ℕ -> Type lzero
-fin = mu nat $ π (enum 2) λ
-          {  nothing  -> π nat λ n -> var (suc n)
-          ; (just tt) -> π nat λ n -> var n ⊛ var (suc n)
-          }
+fin = mu nat ∘ fromList
+    $ (π nat λ n -> var (suc n))
+    ∷ (π nat λ n -> var n ⊛ var (suc n))
+    ∷ []
 
 Fin : ℕ -> Set
 Fin n = ⟦ fin n ⟧
@@ -86,10 +109,10 @@ elimFin P f z (fsuc i) = f (elimFin P f z i)
 
 
 vec : ∀ {α} -> Type α -> ℕ -> Type α
-vec A = mu nat $ π (enum 2) λ
-          {  nothing  -> var 0
-          ; (just tt) -> π nat λ n -> π A λ _ -> var n ⊛ var (suc n)
-          }
+vec A = mu nat ∘ fromList
+      $ var 0
+      ∷ (π nat λ n -> A ⇨ var n ⊛ var (suc n))
+      ∷ []
 
 Vec : ∀ {α} -> Type α -> ℕ -> Set
 Vec A n = ⟦ vec A n ⟧
