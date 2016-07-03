@@ -60,9 +60,8 @@ module _ where
   unreflect = ⟦_⟧ⁿᶠ ∘ reify
 
   postulate
-    -- unreflect ∘ reflect ≗ id
-    eval-reify-reflect : ∀ {A} (x : ⟦ A ⟧ᵗ) -> ⟦ embⁿᶠ (reify (reflect {A} x)) ⟧ ≡ x
-  {-# REWRITE eval-reify-reflect #-}
+    unreflect-reflect : ∀ {A} (x : ⟦ A ⟧ᵗ) -> ⟦ embⁿᶠ (reify (reflect {A} x)) ⟧ ≡ x
+  {-# REWRITE unreflect-reflect #-}
 
   ⟦ emb A ⟧ᵛ = Ne (emb A)
   ⟦ π A B ⟧ᵛ = ∀ x -> ⟦ B (unreflect {A} x) ⟧ᵛ
