@@ -52,22 +52,26 @@ mutual
   embⁿᶠ (lamⁿᶠ k) = lam λ x -> embⁿᶠ (k x)
 
 module _ where
-  ⟦_⟧ᵛ    : Type -> Set₁
-  reify   : ∀ {A} -> ⟦ A ⟧ᵛ -> NF A
-  reflect : ∀ {A} -> ⟦ A ⟧ᵗ -> ⟦ A ⟧ᵛ
+  ⟦_⟧ᵛ      : Type -> Set₁
+  reify     : ∀ {A} -> ⟦ A ⟧ᵛ -> NF A
+  unreflect : ∀ {A} -> ⟦ A ⟧ᵛ -> ⟦ A ⟧ᵗ
+  reflect   : ∀ {A} -> ⟦ A ⟧ᵗ -> ⟦ A ⟧ᵛ
+
+  unreflect = ⟦_⟧ⁿᶠ ∘ reify
 
   postulate
+    -- unreflect ∘ reflect ≗ id
     eval-reify-reflect : ∀ {A} (x : ⟦ A ⟧ᵗ) -> ⟦ embⁿᶠ (reify (reflect {A} x)) ⟧ ≡ x
   {-# REWRITE eval-reify-reflect #-}
 
   ⟦ emb A ⟧ᵛ = Ne (emb A)
-  ⟦ π A B ⟧ᵛ = ∀ x -> ⟦ B ⟦ reify {A} x ⟧ⁿᶠ ⟧ᵛ
+  ⟦ π A B ⟧ᵛ = ∀ x -> ⟦ B (unreflect {A} x) ⟧ᵛ
 
   reify {emb A} n = neⁿᶠ n
   reify {π A B} f = lamⁿᶠ λ x -> reify (f (reflect x))
 
   reflect {emb A} x = varⁿᵉ x
-  reflect {π A B} f = λ x -> reflect (f ⟦ reify x ⟧ⁿᶠ)
+  reflect {π A B} f = λ x -> reflect (f (unreflect x))
 
 read : ∀ {A} -> ⟦ A ⟧ᵗ -> Term A
 read = embⁿᶠ ∘ reify ∘ reflect
