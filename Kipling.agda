@@ -121,7 +121,7 @@ Term⁺ : ∀ {A} -> Type⁺ A -> Set
 Term⁺ {A} _ = ∀ {Γ} -> Γ ⊢ ᵏ A
 
 η_ : ∀ {Γ A B} -> (∀ x -> Γ ▻ A ⊢ B ∘ proj₁ ˢ ⟦ x ⟧) -> Γ ⊢ π ∘ A ˢ B
-η_ f = ƛ f (var vz)
+η f = ƛ f (var vz)
 
 trueᵗ : ∀ {Γ} -> (b : Γ ⊢ ᵏ bool) -> Type _
 trueᵗ = recbᵗ topᵗ botᵗ
