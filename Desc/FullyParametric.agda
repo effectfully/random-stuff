@@ -7,7 +7,7 @@ open import Data.Nat.Base using (ℕ; zero; suc)
 open import Data.Sum
 open import Data.Product
 
-module ParamDesc (P : Set) where
+module Param (P : Set) where
   infixr 5 _⊕_
   infixr 6 _⊛_
 
@@ -17,7 +17,7 @@ module ParamDesc (P : Set) where
     _⊕_ _⊛_ : Desc I -> Desc I -> Desc I
 
 module _ where
-  open ParamDesc ⊤
+  open Param ⊤
 
   ⟦_⟧ : ∀ {I} -> Desc I -> (I -> Set) -> Set
   ⟦ var i ⟧ B = B (i tt)
@@ -34,18 +34,21 @@ module _ where
   data μ {I} (D : Desc I) j : Set where
     node : Extend D (μ D) j -> μ D j
 
+Desc : Set -> Set₁
+Desc I = ∀ {P} -> Param.Desc P I
 
-module _ {P : Set} where
-  open ParamDesc P
+open Param hiding (Desc) public
 
-  vec : Set -> Desc ℕ
-  vec A = var (const 0)
-        ⊕ π (const ℕ) λ n -> π (const A) λ _ -> var n ⊛ var (suc ∘ n)
+
+
+vec : Set -> Desc ℕ
+vec A = var (const 0)
+      ⊕ π (const ℕ) λ n -> π (const A) λ _ -> var n ⊛ var (suc ∘ n)
 
 Vec : Set -> ℕ -> Set
 Vec A = μ (vec A)
 
-pattern []           = node (inj₁ refl)
+pattern []           = node (inj₁  refl)
 pattern _∷_ {n} x xs = node (inj₂ (n , x , xs , refl))
 
 elimVec : ∀ {n A}
