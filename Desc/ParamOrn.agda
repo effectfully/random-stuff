@@ -20,7 +20,7 @@
 -- data D′′ : Set where
 --   C′′ : D′′ -> D′′
 
--- The forgetful maps then are `f₁ : D′ -> D` and `f₂ : D′′ -> D` with the obvious definitions.
+-- The forgetful maps then are `f′ : D′ -> D` and `f′′ : D′′ -> D` with the obvious definitions.
 
 {-# OPTIONS --type-in-type #-}
 
