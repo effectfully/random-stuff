@@ -22,6 +22,11 @@
 
 -- The forgetful maps then are `f′ : D′ -> D` and `f′′ : D′′ -> D` with the obvious definitions.
 
+-- `give` allows to ornament `D` into
+
+-- data D′′′ : Set where
+--   C′′′ : (ℕ -> Bool -> List ℕ -> D′′′) -> D′′′
+
 {-# OPTIONS --type-in-type #-}
 
 open import Function
@@ -40,6 +45,9 @@ infix  3 _∈_
 
 _∸>_ : ∀ {ι α β} {I : Set ι} -> (I -> Set α) -> (I -> Set β) -> Set _
 A ∸> B = ∀ {i} -> A i -> B i
+
+typeOf : ∀ {α} {A : Set α} -> A -> Set α
+typeOf {A = A} _ = A
 
 Any : ∀ {n α β} {A : Set α} -> (A -> Set β) -> Vec A n -> Set β
 Any B  []      = ⊥
@@ -135,6 +143,7 @@ module ParamOrn (P : Set) where
     abst : ∀ {D} -> (A : P -> Set) -> ((∀ p -> A p) -> Orn c true D) -> Orn c true D
     inst : ∀ {A : P -> Set} {D} x -> Orn c true (D x) -> Orn c true (π A D)
     skip : ∀ {A : P -> Set} {D} -> Orn c false D -> Orn c false (π A λ _ -> D)
+    give : ∀ {A : P -> Set} {D} -> (∀ p -> A p) -> Orn c false D -> Orn c false D
 
 open ParamOrn ⊤ using (Orn) public
 open ParamOrn renaming (Orn to OrnOver) public
@@ -146,12 +155,13 @@ DataOrn : ∀ {n} {I J : Set} -> (J -> I) -> Data I n -> Set
 DataOrn c = All (AgdaOrn c)
 
 ⟦_⟧ᵒ : ∀ {P I J b D} {c : J -> I} -> OrnOver P c b D -> DescOver P J
-⟦ var a    ⟧ᵒ = var (arg ∘ a)
-⟦ keep O   ⟧ᵒ = π _ λ x -> ⟦ O x ⟧ᵒ
-⟦ O ⊛ P    ⟧ᵒ = ⟦ O ⟧ᵒ ⊛ ⟦ P ⟧ᵒ
-⟦ abst A O ⟧ᵒ = π _ λ x -> ⟦ O x ⟧ᵒ
-⟦ inst x O ⟧ᵒ = ⟦ O ⟧ᵒ
-⟦ skip O   ⟧ᵒ = ⟦ O ⟧ᵒ
+⟦ var a        ⟧ᵒ = var (arg ∘ a)
+⟦ keep {A} O   ⟧ᵒ = π A λ x -> ⟦ O x ⟧ᵒ
+⟦ O ⊛ P        ⟧ᵒ = ⟦ O ⟧ᵒ ⊛ ⟦ P ⟧ᵒ
+⟦ abst A O     ⟧ᵒ = π A λ x -> ⟦ O x ⟧ᵒ
+⟦ inst x O     ⟧ᵒ = ⟦ O ⟧ᵒ
+⟦ skip O       ⟧ᵒ = ⟦ O ⟧ᵒ
+⟦ give {A} x O ⟧ᵒ = π A λ _ -> ⟦ O ⟧ᵒ
 
 ⟦_⟧ᵈᵒ : ∀ {n} {I J : Set} {c : J -> I} {Ds : Data I n} -> DataOrn c Ds -> Data J n
 ⟦_⟧ᵈᵒ = unmap (λ O {P} -> ⟦ O {P} ⟧ᵒ)
@@ -179,9 +189,10 @@ forgetHyp : ∀ {I J D B} {c : J -> I}
           -> (O : Orn c false D) -> ⟦ ⟦ O ⟧ᵒ ⟧ (B ∘ c) -> ⟦ D ⟧ B
 forgetHyp {B = B} (var  a)  y      with a tt
 ... | inv j r = subst B r y
-forgetHyp         (keep O)  f      = λ x -> forgetHyp (O (const x)) (f x)
-forgetHyp         (O ⊛ E ) (x , y) = forgetHyp O x , forgetHyp E y
-forgetHyp         (skip O)  x      = λ _ -> forgetHyp O x
+forgetHyp         (keep O)    f      = λ x -> forgetHyp (O (const x)) (f x)
+forgetHyp         (O ⊛ E )   (x , y) = forgetHyp O x , forgetHyp E y
+forgetHyp         (skip O)    x      = λ _ -> forgetHyp O x
+forgetHyp         (give x O)  f      = forgetHyp O (f (x tt))
 
 forgetExtend : ∀ {I J D B} {c : J -> I}
              -> (O : Orn c true D) -> Extend ⟦ O ⟧ᵒ (B ∘ c) ∸> Extend D B ∘ c
