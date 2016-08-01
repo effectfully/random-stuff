@@ -22,11 +22,6 @@
 
 -- The forgetful maps then are `f′ : D′ -> D` and `f′′ : D′′ -> D` with the obvious definitions.
 
--- `give` allows to ornament `D` into
-
--- data D′′′ : Set where
---   C′′′ : (ℕ -> Bool -> List ℕ -> D′′′) -> D′′′
-
 {-# OPTIONS --type-in-type #-}
 
 open import Function
