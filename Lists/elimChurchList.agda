@@ -56,10 +56,8 @@ elimList′ {A} P f z p@(xs , u) = subst P coh (proj₂ (xs cons nil)) where
 
   coh = init p (λ xs -> proj₁ (xs cons nil)) (λ _ _ -> refl) refl
 
-pointwise : {A : Set} {B : A -> Set} {p₁ p₂ : Σ A B}
-          -> (q : proj₁ p₁ ≡ proj₁ p₂)
-          -> subst B q (proj₂ p₁) ≡ proj₂ p₂
-          -> p₁ ≡ p₂
+pointwise : ∀ {A : Set} {B : A -> Set} {x₁ x₂ y₁ y₂}
+          -> (q : x₁ ≡ x₂) -> subst B q y₁ ≡ y₂ -> (x₁ , y₁) ≡ (x₂ , y₂)
 pointwise refl refl = refl
 
 elimList : ∀ {A}
@@ -78,7 +76,7 @@ elimList {A} P f z p@(xs , u) = subst P coh (proj₂ (xs cons nil)) where
   open import Relation.Binary.PropositionalEquality.TrustMe
 
   coh = pointwise (init p (λ xs -> proj₁ (proj₁ (xs cons nil))) (λ _ _ -> refl) refl) trustMe
-  
+
 map : ∀ {A B} -> (A -> B) -> List A -> List B
 map f = elimList _ (_∷_ ∘ f) []
 
