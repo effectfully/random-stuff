@@ -28,21 +28,21 @@ data _∈_ σ : Con -> Set where
   vs_ : ∀ {Γ τ} -> σ ∈ Γ -> σ ∈ Γ ▻ τ 
 
 mutual
-  data _⊢_ : Con -> Type -> Set where
-    var  : ∀ {Γ σ}   -> σ ∈ Γ         -> Γ ⊢ σ
-    ƛ_   : ∀ {Γ σ τ} -> Γ ▻ σ ⊢ τ     -> Γ ⊢ σ ⇒ τ
-    _·_  : ∀ {Γ σ τ} -> Γ ⊢ σ ⇒ τ     -> Γ ⊢ σ       -> Γ ⊢ τ
-    _∙_  : ∀ {Γ σ τ} -> Γ ⊢ □ (σ ⇒ τ) -> Γ ⊢ □ σ     -> Γ ⊢ □ τ
-    quot : ∀ {Γ σ}   -> Γ ⊢ σ         -> Γ ⊢ q (□ σ)
-    runq : ∀ {Γ σ}   -> Term (q σ)    -> Γ ⊢ σ
-    elim : ∀ {Γ σ τ} -> Γ ⊢ □ σ       -> Γ ⊢ (τ ⇒ τ ⇒ τ) ⇒ (nat ⇒ τ) ⇒ τ ⇒ τ
+  data _⊢_ Γ : Type -> Set where
+    var  : ∀ {σ}   -> σ ∈ Γ         -> Γ ⊢ σ
+    ƛ_   : ∀ {σ τ} -> Γ ▻ σ ⊢ τ     -> Γ ⊢ σ ⇒ τ
+    _·_  : ∀ {σ τ} -> Γ ⊢ σ ⇒ τ     -> Γ ⊢ σ       -> Γ ⊢ τ
+    _∙_  : ∀ {σ τ} -> Γ ⊢ □ (σ ⇒ τ) -> Γ ⊢ □ σ     -> Γ ⊢ □ τ
+    quot : ∀ {σ}   -> Γ ⊢ σ         -> Γ ⊢ q (□ σ)
+    runq : ∀ {σ}   -> Term (q σ)    -> Γ ⊢ σ
 
-    ret  : ∀ {Γ σ}   -> Γ ⊢ σ ⇒ q σ
-    bind : ∀ {Γ σ τ} -> Γ ⊢ q σ ⇒ (σ ⇒ q τ) ⇒ q τ
-    asse : ∀ {Γ σ}   -> Γ ⊢ □ σ ⇒ σ
-    z    : ∀ {Γ}     -> Γ ⊢ nat
-    s    : ∀ {Γ}     -> Γ ⊢ nat ⇒ nat
-    fold : ∀ {Γ τ}   -> Γ ⊢ (τ ⇒ τ) ⇒ τ ⇒ nat ⇒ τ
+    ret  : ∀ {σ}   -> Γ ⊢ σ ⇒ q σ
+    bind : ∀ {σ τ} -> Γ ⊢ q σ ⇒ (σ ⇒ q τ) ⇒ q τ
+    asse : ∀ {σ}   -> Γ ⊢ □ σ ⇒ σ
+    elim : ∀ {σ τ} -> Γ ⊢ (τ ⇒ τ ⇒ τ) ⇒ (nat ⇒ τ) ⇒ τ ⇒ □ σ ⇒ τ
+    z    :            Γ ⊢ nat
+    s    :            Γ ⊢ nat ⇒ nat
+    fold : ∀ {τ}   -> Γ ⊢ (τ ⇒ τ) ⇒ τ ⇒ nat ⇒ τ
 
   Term : Type -> Set
   Term σ = ε ⊢ σ
@@ -50,6 +50,12 @@ mutual
 data _⊢*_ Δ : Con -> Set where
   ø   : Δ ⊢* ε
   _▷_ : ∀ {Γ σ} -> Δ ⊢* Γ -> Δ ⊢ σ -> Δ ⊢* Γ ▻ σ
+
+Env : Con -> Set
+Env Γ = ε ⊢* Γ
+
+fmap : ∀ {Γ σ τ} -> Γ ⊢ (σ ⇒ τ) ⇒ q σ ⇒ q τ
+fmap = ƛ ƛ bind · var vz · (ƛ ret · (var (vs vs vz) · var vz))
 
 top : ∀ {Γ σ} -> Γ ⊑ Γ ▻ σ
 top = skip stop
@@ -71,10 +77,10 @@ ren ι (f · x)  = ren ι f · ren ι x
 ren ι (f ∙ x)  = ren ι f ∙ ren ι x
 ren ι (quot t) = quot (ren ι t)
 ren ι (runq t) = runq t
-ren ι (elim t) = elim (ren ι t)
 ren ι  ret     = ret
 ren ι  bind    = bind
 ren ι  asse    = asse
+ren ι  elim    = elim
 ren ι  z       = z
 ren ι  s       = s
 ren ι  fold    = fold
@@ -87,9 +93,6 @@ lookup : ∀ {Δ Γ σ} -> σ ∈ Γ -> Δ ⊢* Γ -> Δ ⊢ σ
 lookup  vz    (ψ ▷ t) = t
 lookup (vs v) (ψ ▷ t) = lookup v ψ
 
-Env : Con -> Set
-Env Γ = ε ⊢* Γ
-
 keep* : ∀ {Δ Γ σ} -> Δ ⊢* Γ -> Δ ▻ σ ⊢* Γ ▻ σ
 keep* ψ = ren* top ψ ▷ var vz
 
@@ -100,15 +103,15 @@ subst ψ (f · x)  = subst ψ f · subst ψ x
 subst ψ (f ∙ x)  = subst ψ f ∙ subst ψ x
 subst ψ (quot t) = quot (subst ψ t)
 subst ψ (runq t) = runq t
-subst ψ (elim t) = elim (subst ψ t)
 subst ψ  ret     = ret
 subst ψ  bind    = bind
 subst ψ  asse    = asse
 subst ψ  z       = z
 subst ψ  s       = s
 subst ψ  fold    = fold
+subst ψ  elim    = elim
 
--- A tiny optiomization.
+-- A tiny optimization.
 fill : ∀ {Γ σ} -> Env Γ -> Γ ⊢ σ -> Term σ
 fill ø = id
 fill ψ = subst ψ
@@ -121,7 +124,6 @@ module _ {A : Set} (g : A -> A -> A) (f : ℕ -> A) (x : A) where
   foldTerm (f ∙ x)  = g (foldTerm f) (foldTerm x)
   foldTerm (quot t) = foldTerm t
   foldTerm (runq t) = foldTerm t
-  foldTerm (elim t) = foldTerm t
   foldTerm  _       = x
 
 ⟦_⟧ᵗ : Type -> Set
@@ -142,10 +144,10 @@ mutual
   ⟦ f ∙ x  ⟧ ψ = ⟦ f ⟧ ψ · ⟦ x ⟧ ψ
   ⟦ quot t ⟧ ψ = fill ψ t
   ⟦ runq t ⟧ ψ = eval t
-  ⟦ elim t ⟧ ψ = λ g f x -> eval (foldTerm (λ x y -> g · x · y) (λ n -> f · reifyℕ n) x (⟦ t ⟧ ψ))
   ⟦ ret    ⟧ ψ = eval
   ⟦ bind   ⟧ ψ = λ x f -> eval f (runq x)
   ⟦ asse   ⟧ ψ = eval ∘ eval
+  ⟦ elim   ⟧ ψ = λ g f x -> eval ∘ foldTerm (λ x y -> g · x · y) (λ n -> f · reifyℕ n) x
   ⟦ z      ⟧ ψ = 0
   ⟦ s      ⟧ ψ = suc ∘ eval
   ⟦ fold   ⟧ ψ = λ f x -> eval ∘ Nat.fold x (f ·_) ∘ eval
@@ -168,7 +170,7 @@ plus : Term⁺ (nat ⇒ nat ⇒ nat)
 plus = ƛ ƛ fold · (ƛ s · var vz) · var vz · var (vs vz)
 
 countVars : ∀ {σ} -> Term⁺ (σ ⇒ q nat)
-countVars = ƛ bind · quot (var vz) · (ƛ ret · (elim (var vz) · plus · (ƛ s · z) · z))
+countVars = ƛ fmap · (elim · plus · (ƛ s · z) · z) · quot (var vz)
 
 pureMetaCountVars : ∀ {σ} -> Term σ -> Term nat
 pureMetaCountVars t = runq (countVars · t)
@@ -188,6 +190,6 @@ testPlus = refl
 countVarsCountVars : Term⁺ nat
 countVarsCountVars = runq $ countVars · countVars {nat}
 
--- `quot` is applied to 1 variable, `elim` is applied to 1 variable and `plus` contains 3, hence 5.
-testCountVars : eval countVarsCountVars ≡ 5
+-- `quot` is applied to 1 variable, `fmap` contains `3` and `plus` contains 3, hence 7.
+testCountVars : eval countVarsCountVars ≡ 7
 testCountVars = refl
