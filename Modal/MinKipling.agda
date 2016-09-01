@@ -156,14 +156,14 @@ fmap : ∀ {Γ A B} -> Γ ⊢ ᵏ (A ⇒ B) ⇒ susp A ⇒ susp B
 fmap = ƛ ƛ bind · vz · (ƛ ret · (vs vs vz · vz))
 
 metaCountVars : ∀ {Γ A} -> Γ ⊢ A -> ℕ
-metaCountVars  vz       = 1
-metaCountVars (vs t)    = metaCountVars t
-metaCountVars (ƛ b)     = metaCountVars b
-metaCountVars (f · x)   = metaCountVars f + metaCountVars x
-metaCountVars (quot t)  = metaCountVars t
-metaCountVars (exec t)  = metaCountVars t
-metaCountVars (lift f)  = 0 -- or what?
-metaCountVars  _        = 0
+metaCountVars  vz      = 1
+metaCountVars (vs t)   = metaCountVars t
+metaCountVars (ƛ b)    = metaCountVars b
+metaCountVars (f · x)  = metaCountVars f + metaCountVars x
+metaCountVars (quot t) = metaCountVars t
+metaCountVars (exec t) = metaCountVars t
+metaCountVars (lift f) = 0 -- or what?
+metaCountVars  _       = 0
 
 countVars : ∀ {A} -> Term⁺ (A ⇒ susp nat)
 countVars = ƛ fmap · lift (embn ∘ metaCountVars) · quot vz
