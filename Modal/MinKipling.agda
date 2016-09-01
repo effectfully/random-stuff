@@ -86,8 +86,7 @@ data _⊢_ where
   bind  : ∀ {Γ A B} -> Γ ⊢ ᵏ susp A ⇒ (A ⇒ susp B) ⇒ susp B
   quot  : ∀ {Γ A} -> Γ ⊢ A -> Γ ⊢ susp ∘ term ∘ A
   exec  : ∀ {Γ A} -> Term (susp A) -> Γ ⊢ ᵏ A
-  lift  : ∀ {Γ A B} -> (Term A -> Γ ⊢ B) -> Γ ⊢ _⇒_ (term A) ∘ B
-  -- lift  : ∀ {Γ A B} -> (∀ γ -> Term A -> ⟦ B γ ⟧ᵘ) -> Γ ⊢ _⇒_ (term A) ∘ B
+  lift  : ∀ {Γ A B} -> (∀ γ -> Term A -> ⟦ B γ ⟧ᵘ) -> Γ ⊢ _⇒_ (term A) ∘ B
 
 subst : ∀ {Γ Δ A} ψ -> Γ ⊢ A -> Δ ⊢ A ∘ fill* ψ
 
@@ -110,7 +109,7 @@ subst  ψ       bind     = bind
 subst  ψ      (elimn P) = elimn (P ∘ fill* ψ)
 subst  ψ      (quot t)  = quot (subst ψ t)
 subst  ψ      (exec t)  = exec t
-subst  ψ      (lift f)  = lift (subst ψ ∘ f)
+subst  ψ      (lift f)  = lift (f ∘ fill* ψ)
 
 reifyEnv : ∀ {Γ} -> ⟦ Γ ⟧ᶜ -> ε ⊢* Γ
 
@@ -141,13 +140,13 @@ normn  = embn ∘ eval
 ⟦ bind    ⟧ = ᵏ λ x f -> eval f (exec x)
 ⟦ quot t  ⟧ = fillIn t
 ⟦ exec t  ⟧ = ᵏ eval t
-⟦ lift f  ⟧ = flip (⟦_⟧ ∘ f ∘ eval)
+⟦ lift f  ⟧ = _∘′_ ∘ f ˢ (ᵏ eval)
 
 wk : ∀ {Γ A} -> Term A -> Γ ⊢ ᵏ A
 wk = subst ø
 
 assemble : ∀ {Γ A} -> Γ ⊢ ᵏ term A ⇒ A
-assemble = lift wk
+assemble = lift (ᵏ eval)
 
 Term⁺ : U -> Set
 Term⁺ A = ∀ {Γ} -> Γ ⊢ ᵏ A
@@ -162,11 +161,10 @@ metaCountVars (ƛ b)    = metaCountVars b
 metaCountVars (f · x)  = metaCountVars f + metaCountVars x
 metaCountVars (quot t) = metaCountVars t
 metaCountVars (exec t) = metaCountVars t
-metaCountVars (lift f) = 0 -- or what?
 metaCountVars  _       = 0
 
 countVars : ∀ {A} -> Term⁺ (A ⇒ susp nat)
-countVars = ƛ fmap · lift (embn ∘ metaCountVars) · quot vz
+countVars = ƛ fmap · lift (ᵏ metaCountVars) · quot vz
 
 pureMetaCountVars : ∀ {A} -> Term A -> Term nat
 pureMetaCountVars t = exec (countVars · t)
@@ -196,6 +194,6 @@ testS = refl
 countVarsCountVars : Term⁺ nat
 countVarsCountVars = exec $ countVars · countVars {nat}
 
--- `quot` is applied to 1 variable, `fmap` contains `3` and `lift` is ignored, hence 4.
+-- `quot` is applied to 1 variable and `fmap` contains `3`, hence 4.
 testCountVars : eval countVarsCountVars ≡ 4
 testCountVars = refl
