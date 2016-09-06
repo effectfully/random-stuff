@@ -85,11 +85,10 @@ mutual
   embⁿᶠ  zeⁿᶠ        = ze
   embⁿᶠ (suⁿᶠ n)     = su (embⁿᶠ n)
 
-mutual
-  _⊨_ : Links Type
-  Γ ⊨ nat   = Γ ⊢ⁿᶠ nat
-  Γ ⊨ σ ⊛ τ = Γ ⊨ σ × Γ ⊨ τ
-  Γ ⊨ σ ⇒ τ = ∀ {Δ} -> Γ ⊑ Δ -> Δ ⊨ σ -> Δ ⊨ τ
+_⊨_ : Links Type
+Γ ⊨ nat   = Γ ⊢ⁿᶠ nat
+Γ ⊨ σ ⊛ τ = Γ ⊨ σ × Γ ⊨ τ
+Γ ⊨ σ ⇒ τ = ∀ {Δ} -> Γ ⊑ Δ -> Δ ⊨ σ -> Δ ⊨ τ
 
 _∘ˢ_ : Renames (flip _⊑_)
 stop   ∘ˢ ι      = ι
@@ -135,7 +134,7 @@ mutual
   reify : _⊨_ ∸> _⊢ⁿᶠ_
   reify {nat}    n      = n
   reify {σ ⊛ τ} (x , y) = pairⁿᶠ (reify x) (reify y)
-  reify {σ ⇒ τ}  k      = ƛⁿᶠ reify (k top (varᵐ vz)) 
+  reify {σ ⇒ τ}  k      = ƛⁿᶠ (reify (k top (varᵐ vz)))
 
 data _⊨*_ Δ : Con -> Set where
   ø   : Δ ⊨* ε
