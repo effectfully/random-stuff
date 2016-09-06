@@ -70,12 +70,6 @@ full {Γ ▻ σ} = keep full
 top : ∀ {Γ σ} -> Γ ⊑ Γ ▻ σ
 top = skip full
 
-_∘ˢ_ : ∀ {Γ Δ Ξ} -> Δ ⊑ Ξ -> Γ ⊑ Δ -> Γ ⊑ Ξ
-stop   ∘ˢ ι      = ι
-skip κ ∘ˢ ι      = skip (κ ∘ˢ ι)
-keep κ ∘ˢ skip ι = skip (κ ∘ˢ ι)
-keep κ ∘ˢ keep ι = keep (κ ∘ˢ ι)
-
 mutual
   embⁿᵉ : _⊢ⁿᵉ_ ∸> _⊢_
   embⁿᵉ (varⁿᵉ v)      = var v
@@ -96,6 +90,12 @@ mutual
   Γ ⊨ nat   = Γ ⊢ⁿᶠ nat
   Γ ⊨ σ ⊛ τ = Γ ⊨ σ × Γ ⊨ τ
   Γ ⊨ σ ⇒ τ = ∀ {Δ} -> Γ ⊑ Δ -> Δ ⊨ σ -> Δ ⊨ τ
+
+_∘ˢ_ : Renames (flip _⊑_)
+stop   ∘ˢ ι      = ι
+skip κ ∘ˢ ι      = skip (κ ∘ˢ ι)
+keep κ ∘ˢ skip ι = skip (κ ∘ˢ ι)
+keep κ ∘ˢ keep ι = keep (κ ∘ˢ ι)
 
 renᵛ : Renames (flip _∈_)
 renᵛ  stop     v     = v
