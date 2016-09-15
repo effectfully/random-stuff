@@ -3,20 +3,16 @@
 -- But we define type checking mutually with evaluation
 -- and allow to change the type of a term to a denotationally equal one.
 
--- This is due to the `coe' constructor.
--- If there would be `Prop' in Agda, we wouldn't need these pragmas.
-{-# OPTIONS --type-in-type --universe-polymorphism #-}
--- Alternatively we can remove equality proofs from `coe' and use `trustMe' in ⟦_⟧.
-
 open import Level renaming (zero to lzero; suc to lsuc)
 open import Function
-open import Relation.Binary.PropositionalEquality hiding ([_])
 open import Data.Unit.Base
 open import Data.Product
 
-instance
-  irefl : ∀ {α} {A : Set α} {x : A} -> x ≡ x
-  irefl = refl
+data _≡_ {α} {A : Set α} (x : A) : A -> Set where
+  instance refl : x ≡ x 
+
+subst : ∀ {α π} {A : Set α} {x y : A} -> (P : A -> Set π) -> x ≡ y -> P x -> P y
+subst P refl = id
 
 infix  4 _⊢_ _⊢*_
 infixl 6 _▻_
@@ -69,8 +65,7 @@ data _⊢_ where
   ⌊_⌋  : ∀ {α γ} {Γ : Con γ} -> Type Γ α -> Γ ⊢ type α
   _[_] : ∀ {α γ δ} {Γ : Con γ} {Δ : Con δ} {A : Type Γ α}
        -> Γ ⊢ A -> (ψ : Δ ⊢* Γ) -> Δ ⊢ A [ ψ ]ᵗ
-  coe  : ∀ {α γ} {Γ : Con γ} {A₁ A₂ : Type Γ α}
-           {{_ : ∀ {ρ} -> ⟦ A₁ ⟧ᵗ ρ ≡ ⟦ A₂ ⟧ᵗ ρ}}
+  coe  : ∀ {α γ} {Γ : Con γ} {A₁ A₂ : Type Γ α} {{_ : ⟦ A₁ ⟧ᵗ ≡ ⟦ A₂ ⟧ᵗ}}
        -> Γ ⊢ A₁ -> Γ ⊢ A₂
 
 ⟦ ε     ⟧ᶜ = Lift ⊤
@@ -89,7 +84,7 @@ data _⊢_ where
 
 B ⟨ x ⟩ᵗ = B [ idˢ ▷ coe x ]ᵗ
 
-⟦ coe {{q}} t ⟧ ρ rewrite sym (q {ρ}) = ⟦ t ⟧ ρ
+⟦ coe {{q}} t ⟧ ρ = subst (_$ ρ) q (⟦ t ⟧ ρ)
 ⟦ vz          ⟧ ρ = proj₂ ρ
 ⟦ ƛ b         ⟧ ρ = λ x -> ⟦ b ⟧ (ρ , x)
 ⟦ f · x       ⟧ ρ = ⟦ f ⟧ ρ (⟦ x ⟧ ρ)
@@ -111,7 +106,7 @@ _⇒_ : ∀ {α β γ} {Γ : Con γ} -> Type Γ α -> Type Γ β -> Type Γ (α 
 A ⇒ B = π A (shiftᵗ B)
 
 ⌜_⌝ : ∀ {α γ} {Γ : Con γ} {A : Type Γ (lsuc α)}
-        {{_ : ∀ {ρ} -> ⟦ A ⟧ᵗ ρ ≡ Set α}}
+        {{_ : ⟦ A ⟧ᵗ ≡ const (Set α)}}
     -> Γ ⊢ A -> Type Γ α
 ⌜ t ⌝ = ⌈ coe t ⌉
 
