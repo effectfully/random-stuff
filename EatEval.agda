@@ -1,7 +1,14 @@
--- This is the same as in the "Type theory eating itself?" article
+-- This is based on the "Type theory eating itself?" article
 --    http://www.cs.bham.ac.uk/~mhe/TT-perhaps-eating-itself/TT-perhaps-eating-itself.html
--- But we define type checking mutually with evaluation
--- and allow to change the type of a term to a denotationally equal one.
+-- We collapse the T₀...T₄ and T⁰...T⁴ syntactic transports into
+-- just one constructor: `coe`. Its type is
+
+--   coe  : ∀ {α γ} {Γ : Con γ} {A₁ A₂ : Type Γ α} {{_ : ⟦ A₁ ⟧ᵗ ≡ ⟦ A₂ ⟧ᵗ}}
+--        -> Γ ⊢ A₁ -> Γ ⊢ A₂
+
+-- I.e. it allows to change the type of a term to a denotationally equal one.
+-- Hence type checking is defined mutually with evaluation like it should.
+-- All other things are the same as in the original article (some notation may differ).
 
 open import Level renaming (zero to lzero; suc to lsuc)
 open import Function
@@ -105,8 +112,7 @@ Term⁺ A = ∀ {γ} {Γ : Con γ} -> Γ ⊢ A
 _⇒_ : ∀ {α β γ} {Γ : Con γ} -> Type Γ α -> Type Γ β -> Type Γ (α ⊔ β)
 A ⇒ B = π A (shiftᵗ B)
 
-⌜_⌝ : ∀ {α γ} {Γ : Con γ} {A : Type Γ (lsuc α)}
-        {{_ : ⟦ A ⟧ᵗ ≡ const (Set α)}}
+⌜_⌝ : ∀ {α γ} {Γ : Con γ} {A : Type Γ (lsuc α)} {{_ : ⟦ A ⟧ᵗ ≡ λ _ -> Set α}}
     -> Γ ⊢ A -> Type Γ α
 ⌜ t ⌝ = ⌈ coe t ⌉
 
