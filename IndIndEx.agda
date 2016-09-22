@@ -18,7 +18,8 @@ data Tag {α} (A : Set α) : Set (suc α) where
   ulist : Tag A
   inn   : {R : Set α} -> A -> R -> Tag A
 
--- It's positive. Agda just doesn't track polariry of indices.
+-- It's positive. Agda just doesn't track polarity of indices.
+-- "self-polymorphic recursion"
 {-# NO_POSITIVITY_CHECK #-}
 data UListInn {α} (A : Set α) : Tag A -> Set α where
   []   : UListInn A ulist
