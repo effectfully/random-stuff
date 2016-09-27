@@ -9,8 +9,8 @@ record Monad (M : ∀ {α} -> Set α -> Set α) α β : Set (suc (α ⊔ β)) wh
     ret   : {q : α ≡ β} {A : Set α} -> A -> M A
     _>>=_ : {A : Set α} {B : Set β} -> M A -> (A -> M B) -> M B
 
-module Monadic {M : ∀ {α} -> Set α -> Set α} {α} {A : Set α} (mMonad : ∀ {β} -> Monad M α β) where
-  private open module Dummy {β} = Monad (mMonad {β})
+module Monadic {M : ∀ {α} -> Set α -> Set α} {α} {A : Set α} (mMonad : Monad M α α) where
+  private open module Dummy = Monad mMonad
 
   return : A -> M A
   return = ret {q = refl}
