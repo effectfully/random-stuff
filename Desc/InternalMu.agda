@@ -128,3 +128,23 @@ example = cons₂ true zero (cons₂ false (suc (suc zero)) [])
 -- So the example with AST from the paper doesn't actually require the reindexing operator.
 nat′ : ∀ {A} -> ⊤ ⊎ A ▶ A
 nat′ = arg tt ⊚ nat ⊚ arg (inj₁ tt)
+
+ilist : ∀ I -> ⟦ I ⟧⁽⁾ ▶ ⊤
+ilist I = mu
+        $ top
+        ⊕ σ I λ i -> arg (inj₁ i) ⊛ arg (inj₂ tt)
+
+IList : ∀ I -> (⟦ I ⟧⁽⁾ -> Set) -> Set
+IList I A = ⟦ ilist I ⟧ A tt
+
+pattern []ᵢ           = node (inj₁ tt)
+pattern _∷ᵢ_ {i} x xs = node (inj₂ (i , x , xs))
+
+elimIList : ∀ {π I A}
+          -> (P : IList I A -> Set π)
+          -> (∀ {i xs} -> (x : A i) -> P xs -> P (x ∷ᵢ xs))
+          -> P []ᵢ
+          -> ∀ xs
+          -> P xs
+elimIList P f z  []ᵢ      = z
+elimIList P f z (x ∷ᵢ xs) = f x (elimIList P f z xs)
