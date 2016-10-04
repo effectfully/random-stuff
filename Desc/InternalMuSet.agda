@@ -20,42 +20,43 @@ _<|>_ = [_,_]
 _▷_ : Set -> Set -> Set₁
 I ▷ O = Over I -> Over O
 
+data _▶_ (I : Set) : Set -> Set₁ where
+  arg : ∀ {O}   -> I -> I ▶ O
+  ret : ∀ {O}   -> O -> I ▶ O
+  _⊕_ : ∀ {O}   -> I ▶ O -> I ▶ O -> I ▶ O
+  _⊛_ : ∀ {O}   -> I ▶ O -> I ▶ O -> I ▶ O
+  _⊚_ : ∀ {O U} -> U ▶ O -> I ▶ U -> I ▶ O
+  _⊞_ : ∀ {O U} -> I ▶ O -> I ▶ U -> I ▶ O ⊎ U
+  κ   : ∀ {O}   -> Set -> I ▶ O
+  σ   : ∀ {O}   -> (A : Set) -> (A -> I ▶ O) -> I ▶ O
+  mu  : ∀ {O}   -> I ⊎ O ▶ O -> I ▶ O 
+
 mutual
-  data _▶_ (I : Set) : Set -> Set₁ where
-    top : ∀ {O}   -> I ▶ O
-    arg : ∀ {O}   -> I -> I ▶ O
-    ret : ∀ {O}   -> O -> I ▶ O
-    _⊕_ : ∀ {O}   -> I ▶ O -> I ▶ O -> I ▶ O
-    _⊛_ : ∀ {O}   -> I ▶ O -> I ▶ O -> I ▶ O
-    _⊞_ : ∀ {O U} -> I ▶ O -> I ▶ U -> I ▶ O ⊎ U
-    _⊚_ : ∀ {O U} -> U ▶ O -> I ▶ U -> I ▶ O
-    σ   : ∀ {O}   -> (D : ⊥ ▶ ⊤) -> (⟦ D ⟧⁽⁾ -> I ▶ O) -> I ▶ O
-    mu  : ∀ {O}   -> I ⊎ O ▶ O -> I ▶ O 
-    wk  : ∀ {O I′ O′} -> (I′ -> I) -> (O -> O′) -> I′ ▶ O′ -> I ▶ O
-
   ⟦_⟧ : ∀ {I O} -> I ▶ O -> I ▷ O
-  ⟦ top      ⟧ B j = ⊤
-  ⟦ arg i    ⟧ B j = B i
-  ⟦ ret i    ⟧ B j = i ≡ j
-  ⟦ D ⊕ E    ⟧ B j = ⟦ D ⟧ B j ⊎ ⟦ E ⟧ B j
-  ⟦ D ⊛ E    ⟧ B j = ⟦ D ⟧ B j × ⟦ E ⟧ B j
-  ⟦ D ⊞ E    ⟧ B j = (⟦ D ⟧ B <|> ⟦ E ⟧ B) j
-  ⟦ σ D E    ⟧ B j = ∃ λ x -> ⟦ E x ⟧ B j
-  ⟦ E ⊚ D    ⟧ B j = ⟦ E ⟧ (⟦ D ⟧ B) j
-  ⟦ mu F     ⟧ B j = μ F B j 
-  ⟦ wk f g D ⟧ B j = ⟦ D ⟧ (B ∘ f) (g j)
-
-  ⟦_⟧⁽⁾ : ⊥ ▶ ⊤ -> Set
-  ⟦ D ⟧⁽⁾ = ⟦ D ⟧ (λ()) tt
+  ⟦ arg i ⟧ B j = B i
+  ⟦ ret i ⟧ B j = i ≡ j
+  ⟦ D ⊕ E ⟧ B j = ⟦ D ⟧ B j ⊎ ⟦ E ⟧ B j
+  ⟦ D ⊛ E ⟧ B j = ⟦ D ⟧ B j × ⟦ E ⟧ B j
+  ⟦ E ⊚ D ⟧ B j = ⟦ E ⟧ (⟦ D ⟧ B) j
+  ⟦ D ⊞ E ⟧ B j = (⟦ D ⟧ B <|> ⟦ E ⟧ B) j
+  ⟦ κ A   ⟧ B j = A
+  ⟦ σ A D ⟧ B j = ∃ λ x -> ⟦ D x ⟧ B j
+  ⟦ mu F  ⟧ B j = μ F B j
 
   data μ {I O} (F : I ⊎ O ▶ O) (B : Over I) (j : O) : Set where
     node : ⟦ F ⟧ (B <|> μ F B) j -> μ F B j
 
-[_]ₚ_ : ∀ {I O} -> I ▶ O -> I -> ⊥ ▶ O
+top : ∀ {I O} -> I ▶ O
+top = κ ⊤
+
+[_]ₚ_ : ∀ {I O U} -> I ▶ O -> I -> U ▶ O
 [ D ]ₚ i = D ⊚ ret i
 
-[_]ᵢ_ : ∀ {I O} -> I ▶ O -> O -> I ▶ ⊤
+[_]ᵢ_ : ∀ {I O U} -> I ▶ O -> O -> I ▶ U
 [ D ]ᵢ i = arg i ⊚ D
+
+⟦_⟧⁽⁾ : ⊥ ▶ ⊤ -> Set
+⟦ D ⟧⁽⁾ = ⟦ D ⟧ (λ()) tt
 
 
 
@@ -128,19 +129,19 @@ example = cons₂ true zero (cons₂ false (suc (suc zero)) [])
 nat′ : ∀ {A} -> ⊤ ⊎ A ▶ A
 nat′ = arg tt ⊚ nat ⊚ arg (inj₁ tt)
 
-ilist : ∀ I -> ⟦ I ⟧⁽⁾ ▶ ⊤
+ilist : ∀ I -> I ▶ ⊤
 ilist I = mu
         $ top
         ⊕ σ I λ i -> arg (inj₁ i) ⊛ arg (inj₂ tt)
 
-IList : ∀ I -> (⟦ I ⟧⁽⁾ -> Set) -> Set
-IList I A = ⟦ ilist I ⟧ A tt
+IList : ∀ {I} -> (I -> Set) -> Set
+IList A = ⟦ ilist _ ⟧ A tt
 
 pattern []ᵢ           = node (inj₁  tt)
 pattern _∷ᵢ_ {i} x xs = node (inj₂ (i , x , xs))
 
-elimIList : ∀ {π I A}
-          -> (P : IList I A -> Set π)
+elimIList : ∀ {π I} {A : I -> Set}
+          -> (P : IList A -> Set π)
           -> (∀ {i xs} -> (x : A i) -> P xs -> P (x ∷ᵢ xs))
           -> P []ᵢ
           -> ∀ xs
