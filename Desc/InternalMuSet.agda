@@ -28,8 +28,8 @@ data _▶_ (I : Set) : Set -> Set₁ where
   _⊚_ : ∀ {O U} -> U ▶ O -> I ▶ U -> I ▶ O
   _⊞_ : ∀ {O U} -> I ▶ O -> I ▶ U -> I ▶ O ⊎ U
   κ   : ∀ {O}   -> Set -> I ▶ O
-  σ   : ∀ {O}   -> (A : Set) -> (A -> I ▶ O) -> I ▶ O
-  mu  : ∀ {O}   -> I ⊎ O ▶ O -> I ▶ O 
+  π σ : ∀ {O}   -> (A : Set) -> (A -> I ▶ O) -> I ▶ O
+  mu  : ∀ {O}   -> I ⊎ O ▶ O -> I ▶ O
 
 mutual
   ⟦_⟧ : ∀ {I O} -> I ▶ O -> I ▷ O
@@ -40,6 +40,7 @@ mutual
   ⟦ E ⊚ D ⟧ B j = ⟦ E ⟧ (⟦ D ⟧ B) j
   ⟦ D ⊞ E ⟧ B j = (⟦ D ⟧ B <|> ⟦ E ⟧ B) j
   ⟦ κ A   ⟧ B j = A
+  ⟦ π A D ⟧ B j = ∀   x -> ⟦ D x ⟧ B j
   ⟦ σ A D ⟧ B j = ∃ λ x -> ⟦ D x ⟧ B j
   ⟦ mu F  ⟧ B j = μ F B j
 
