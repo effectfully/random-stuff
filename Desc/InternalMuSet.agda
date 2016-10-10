@@ -102,6 +102,9 @@ bool : ⊥ ▶ ⊤
 bool = top
      ⊕ top
 
+Bool : Set
+Bool = ⟦ bool ⟧⁽⁾
+
 pattern true  = inj₁ tt
 pattern false = inj₂ tt
 
@@ -109,6 +112,9 @@ nat : ⊥ ▶ ⊤
 nat = mu
     $ top
     ⊕ arg (inj₂ tt)
+
+ℕ : Set
+ℕ = ⟦ nat ⟧⁽⁾
 
 pattern zero   = node (inj₁ tt)
 pattern suc  n = node (inj₂ n)
@@ -125,6 +131,9 @@ pattern cons₂ x y xs = node (inj₂ (x , y , xs))
 
 example : ⟦ list₂ ⊚ bool ⊞ nat ⟧⁽⁾
 example = cons₂ true zero (cons₂ false (suc (suc zero)) [])
+
+example′ : ⟦ list₂ ⊚ κ Bool ⊞ κ ℕ ⟧⁽⁾
+example′ = cons₂ true zero (cons₂ false (suc (suc zero)) [])
 
 -- So the example with AST from the paper doesn't actually require the reindexing operator.
 nat′ : ∀ {A} -> ⊤ ⊎ A ▶ A
