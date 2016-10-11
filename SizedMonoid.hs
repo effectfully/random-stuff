@@ -25,7 +25,7 @@ instance Ix a => Ix (Vec n a) where
 
 newtype Sized m (ns :: [Nat]) a = Sized { getArray :: Array (Vec m Int) a }
 
-vecBounds :: forall m (ns :: [Nat]). (SingI m) => Sing ns -> (Vec m Int, Vec m Int)
+vecBounds :: forall m (ns :: [Nat]). SingI m => Sing ns -> (Vec m Int, Vec m Int)
 vecBounds singNs = (Vec $ replicate m 0, Vec ns') where
     m   = toInt $ fromSing (sing :: Sing m)
     ns' = map (pred . toInt) $ fromSing singNs
