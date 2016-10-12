@@ -60,10 +60,10 @@ instance Tuple (a, b, c) where
   inMap _  p = (S (bimap fst3 fst3 p), S (bimap snd3 snd3 p), S (bimap thd3 thd3 p))
   mapMap _ n (xs, ys, zs) = (n xs, n ys, n zs)
 
-gunzip :: forall f t. (Split f, Tuple t) => f t -> Map f t
+gunzip :: (Split f, Tuple t) => f t -> Map f t
 gunzip = uniteMap . second gunzip . split
 
-gzip :: forall f t. (Split f, Tuple t) => Map f t -> f t
+gzip :: (Split f, Tuple t) => Map f t -> f t
 gzip = unite . second gzip . splitMap
 
 data Rose a = Rose a [Rose a] deriving (Show)
@@ -97,7 +97,7 @@ instance Split [] where
 instance Split Rose where
   data Layer Rose a b = Multi a [b]
   
-  split (Rose x xs ) = Multi x xs
+  split (Rose  x xs) = Multi x xs
   
   unite (Multi x xs) = Rose  x xs
 
