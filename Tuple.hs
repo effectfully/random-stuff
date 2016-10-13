@@ -1,4 +1,4 @@
-{-# LANGUAGE KindSignatures, ScopedTypeVariables, RankNTypes, MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, TypeFamilies, UndecidableInstances #-}
+{-# LANGUAGE KindSignatures, ScopedTypeVariables, RankNTypes, MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, TypeFamilies #-}
 
 import Prelude
 import Data.Proxy

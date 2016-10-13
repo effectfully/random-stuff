@@ -1,11 +1,9 @@
 open import Function
 open import Relation.Nullary
 open import Relation.Nullary.Decidable
-open import Relation.Nullary.Product
 open import Data.Nat.Base
 open import Data.Fin
 open import Data.Sum renaming (map to smap)
-open import Data.Product
 
 fromInj₁ : ∀ {α β} {A : Set α} {B : Set β} -> (A -> B) -> A ⊎ B -> B
 fromInj₁ f = [ f , id ]′
