@@ -1,19 +1,12 @@
 open import Function
 open import Relation.Nullary
 open import Relation.Nullary.Decidable
-open import Data.Nat.Base
-open import Data.Sum renaming (map to smap)
-
-fromInj₁ : ∀ {α β} {A : Set α} {B : Set β} -> (A -> B) -> A ⊎ B -> B
-fromInj₁ f = [ f , id ]′
-
-fromInj₂ : ∀ {α β} {A : Set α} {B : Set β} -> (B -> A) -> A ⊎ B -> A
-fromInj₂ g = [ id , g ]′
 
 infixl 6 _▻_
 infixr 6 _⇒_
 infix  4 _⊢_ _∈_
 infixl 7 _·_
+infixl 5 _▷_
 
 data Type : Set where
   ι   : Type
@@ -35,86 +28,73 @@ data _⊢_ Γ : Type -> Set where
 
 mutual
   data Nf {Γ} : ∀ {σ} -> Γ ⊢ σ -> Set where
-    neⁿᶠ   : ∀ {σ} {t : Γ ⊢ σ} -> Ne t -> Nf t
+    appⁿᶠ  : ∀ {σ τ} {t : Γ ⊢ τ} -> (v : σ ∈ Γ) -> Spine v t -> Nf t
     ƛⁿᶠ    : ∀ {σ τ} {b : Γ ▻ σ ⊢ τ} -> Nf b -> Nf (ƛ b)
     unitⁿᶠ : Nf unit
 
-  data Ne {Γ} : ∀ {σ} -> Γ ⊢ σ -> Set where
-    spⁿᵉ : ∀ {σ τ} {v : σ ∈ Γ} {t : Γ ⊢ τ} -> Head v t -> Ne t
+  data Spine {Γ σ} (v : σ ∈ Γ) : ∀ {τ} -> Γ ⊢ τ -> Set where
+    ø   : Spine v (var v)
+    _▷_ : ∀ {τ ν} {t : Γ ⊢ τ ⇒ ν} {s : Γ ⊢ τ} -> Spine v t -> Nf s -> Spine v (t · s)
 
-  data Head {Γ σ} (v : σ ∈ Γ) : ∀ {τ} -> Γ ⊢ τ -> Set where
-    ø   : Head v (var v)
-    _▷_ : ∀ {τ ν} {t : Γ ⊢ τ ⇒ ν} {s : Γ ⊢ τ} -> Head v t -> Nf s -> Head v (t · s)
-
-Shaped : ∀ {Γ σ} -> Γ ⊢ σ -> Set
-Shaped t = Ne t ⊎ Nf t
-
-nfˢ : ∀ {Γ σ} {t : Γ ⊢ σ}
-    -> Shaped t -> Nf t
-nfˢ = fromInj₁ neⁿᶠ
-
--- We really need pattern matching pattern synonyms.
-_·ⁿᵉ_ : ∀ {Γ σ τ} {f : Γ ⊢ σ ⇒ τ} {x} -> Ne f -> Nf x -> Ne (f · x)
-spⁿᵉ f ·ⁿᵉ x = spⁿᵉ (f ▷ x)
-
-appˢ : ∀ {Γ σ τ} {f : Γ ⊢ σ ⇒ τ} {x}
-     -> Ne f -> Shaped x -> Shaped (f · x)
-appˢ f = inj₁ ∘ _·ⁿᵉ_ f ∘ nfˢ
-
-ƛˢ : ∀ {Γ σ τ} {b : Γ ▻ σ ⊢ τ}
-   -> Shaped b -> Shaped (ƛ b)
-ƛˢ = inj₂ ∘ ƛⁿᶠ ∘ nfˢ
-
-unappⁿᶠ : ∀ {Γ σ τ} {f : Γ ⊢ σ ⇒ τ} {x}
-        -> Nf (f · x) -> Ne (f · x)
-unappⁿᶠ (neⁿᶠ t) = t
-
-unfunⁿᵉ : ∀ {Γ σ τ} {f : Γ ⊢ σ ⇒ τ} {x}
-        -> Ne (f · x) -> Ne f
-unfunⁿᵉ (spⁿᵉ (f ▷ x)) = spⁿᵉ f
-
-unargⁿᵉ : ∀ {Γ σ τ} {f : Γ ⊢ σ ⇒ τ} {x}
-        -> Ne (f · x) -> Nf x
-unargⁿᵉ (spⁿᵉ (f ▷ x)) = x
+pattern _·ˢᵖ_ f x = appⁿᶠ _ (f ▷ x)
 
 unƛⁿᶠ : ∀ {Γ σ τ} {b : Γ ▻ σ ⊢ τ}
       -> Nf (ƛ b) -> Nf b
-unƛⁿᶠ (neⁿᶠ (spⁿᵉ ()))
+unƛⁿᶠ (appⁿᶠ v ())
 unƛⁿᶠ (ƛⁿᶠ b) = b
 
-noβⁿᵉ : ∀ {Γ σ τ} {b : Γ ▻ σ ⊢ τ} {x}
-      -> ¬ Ne (ƛ b · x)
-noβⁿᵉ (spⁿᵉ (() ▷ _))
+unfunⁿᶠ : ∀ {Γ σ τ} {f : Γ ⊢ σ ⇒ τ} {x}
+        -> Nf (f · x) -> Nf f
+unfunⁿᶠ (f ·ˢᵖ x) = appⁿᶠ _ f
 
-unappˢ : ∀ {Γ σ τ} {f : Γ ⊢ σ ⇒ τ} {x}
-       -> Shaped (f · x) -> Ne (f · x)
-unappˢ = fromInj₂ unappⁿᶠ
+unargⁿᶠ : ∀ {Γ σ τ} {f : Γ ⊢ σ ⇒ τ} {x}
+        -> Nf (f · x) -> Nf x
+unargⁿᶠ (f ·ˢᵖ x) = x
 
-unfunˢ : ∀ {Γ σ τ} {f : Γ ⊢ σ ⇒ τ} {x}
-       -> Shaped (f · x) -> Shaped f
-unfunˢ = inj₁ ∘ unfunⁿᵉ ∘ unappˢ
-
-unargˢ : ∀ {Γ σ τ} {f : Γ ⊢ σ ⇒ τ} {x}
-       -> Shaped (f · x) -> Shaped x
-unargˢ = inj₂ ∘ unargⁿᵉ ∘ unappˢ
-
-unƛˢ : ∀ {Γ σ τ} {b : Γ ▻ σ ⊢ τ}
-     -> Shaped (ƛ b) -> Shaped b
-unƛˢ = smap (λ{(spⁿᵉ())}) unƛⁿᶠ
-
-noβˢ : ∀ {Γ σ τ} {b : Γ ▻ σ ⊢ τ} {x}
-     -> ¬ Shaped (ƛ b · x)
-noβˢ = noβⁿᵉ ∘ unappˢ
-
-decShaped : ∀ {Γ σ} -> (t : Γ ⊢ σ) -> Dec (Shaped t)
-decShaped (var i) = yes (inj₁ (spⁿᵉ ø))
-decShaped (ƛ b)   = map′ ƛˢ unƛˢ (decShaped b)
-decShaped (f · x) with decShaped f | λ f′ -> map′ (appˢ f′) unargˢ (decShaped x)
-... | yes (inj₁  f′)       | rec = rec f′
-... | yes (inj₂ (neⁿᶠ f′)) | rec = rec f′
-... | yes (inj₂ (ƛⁿᶠ  b′)) | rec = no  noβˢ
-... | no   c               | rec = no (c ∘ unfunˢ)
-decShaped  unit   = yes (inj₂ unitⁿᶠ)
+noβⁿᶠ : ∀ {Γ σ τ} {b : Γ ▻ σ ⊢ τ} {x}
+      -> ¬ Nf (ƛ b · x)
+noβⁿᶠ (() ·ˢᵖ x)
 
 decNf : ∀ {Γ σ} -> (t : Γ ⊢ σ) -> Dec (Nf t)
-decNf = map′ nfˢ inj₂ ∘ decShaped
+decNf (var v) = yes (appⁿᶠ v ø)
+decNf (ƛ b)   = map′ ƛⁿᶠ unƛⁿᶠ (decNf b)
+decNf (f · x) with decNf f
+... | yes (appⁿᶠ v sp) = map′ (sp ·ˢᵖ_) unargⁿᶠ (decNf x)
+... | yes (ƛⁿᶠ  b′)    = no  noβⁿᶠ
+... | no   c           = no (c ∘ unfunⁿᶠ)
+decNf  unit   = yes unitⁿᶠ
+
+module Translation where
+  infix 4 _⊢ⁿᶠ_ _⊢ⁿᵉ_ _⊢ˢᵖ_∶_
+  infixl 5 _▷_
+
+  mutual
+    data _⊢ⁿᶠ_ (Γ : Con) : Type → Set where
+      neⁿᶠ   : ∀ {P}   → Γ ⊢ⁿᵉ P → Γ ⊢ⁿᶠ P
+      lamⁿᶠ  : ∀ {A B} → Γ ▻ A ⊢ⁿᶠ B → Γ ⊢ⁿᶠ A ⇒ B
+      unitⁿᶠ : Γ ⊢ⁿᶠ ι
+
+    data _⊢ⁿᵉ_ (Γ : Con) : Type → Set where
+      spⁿᵉ : ∀ {A C} → A ∈ Γ → Γ ⊢ˢᵖ A ∶ C → Γ ⊢ⁿᵉ C
+
+    data _⊢ˢᵖ_∶_ (Γ : Con) : Type → Type → Set where
+      ø   : ∀ {C}     → Γ ⊢ˢᵖ C ∶ C
+      _▷_ : ∀ {A B C} → Γ ⊢ˢᵖ B ∶ C → Γ ⊢ⁿᶠ A → Γ ⊢ˢᵖ A ⇒ B ∶ C
+
+  mutual
+    coeⁿᶠ : ∀ {Γ σ} {t : Γ ⊢ σ} -> Nf t -> Γ ⊢ⁿᶠ σ
+    coeⁿᶠ (appⁿᶠ v sp) = neⁿᶠ (spⁿᵉ v (coeˢᵖ ø sp))
+    coeⁿᶠ (ƛⁿᶠ b)      = lamⁿᶠ (coeⁿᶠ b)
+    coeⁿᶠ  unitⁿᶠ      = unitⁿᶠ
+
+    coeˢᵖ : ∀ {Γ σ τ ν} {v : σ ∈ Γ} {t : Γ ⊢ τ} -> Γ ⊢ˢᵖ τ ∶ ν -> Spine v t -> Γ ⊢ˢᵖ σ ∶ ν
+    coeˢᵖ a  ø       = a
+    coeˢᵖ a (sp ▷ t) = coeˢᵖ (a ▷ coeⁿᶠ t) sp
+
+  mine : ∀ {Γ σ τ ν δ} {t : Γ ⊢ σ} {s : Γ ⊢ τ} {u : Γ ⊢ ν}
+       -> (v : σ ⇒ τ ⇒ ν ⇒ δ ∈ Γ) -> Nf t -> Nf s -> Nf u -> Nf (var v · t · s · u)
+  mine v t s u = appⁿᶠ v (ø ▷ t ▷ s ▷ u)
+
+  yours : ∀ {Γ σ τ ν δ} 
+        -> (v : σ ⇒ τ ⇒ ν ⇒ δ ∈ Γ) -> Γ ⊢ⁿᶠ σ -> Γ ⊢ⁿᶠ τ -> Γ ⊢ⁿᶠ ν -> Γ ⊢ⁿᶠ δ
+  yours v t s u = neⁿᶠ (spⁿᵉ v (ø ▷ u ▷ s ▷ t))
