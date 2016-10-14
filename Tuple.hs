@@ -67,39 +67,55 @@ gzip :: (Split f, Tuple t) => Map f t -> f t
 gzip = unite . second gzip . splitMap
 
 data Rose a = Rose a [Rose a] deriving (Show)
+data Stream a = Stream a (Stream a)
 
-type MaybeBoth = Layer []
-type Multi     = Layer Rose
+type ListF   = Layer []
+type RoseF   = Layer Rose
+type StreamF = Layer Stream
+  
+instance Bifunctor ListF where
+  bimap f g (ListF a) = ListF $ bimap f g <$> a
 
-instance Bifunctor MaybeBoth where
-  bimap f g (MaybeBoth a) = MaybeBoth $ bimap f g <$> a
+instance Bifunctor RoseF where
+  bimap f g (RoseF x xs) = RoseF (f x) (map g xs)
 
-instance Bifunctor Multi where
-  bimap f g (Multi x xs) = Multi (f x) (map g xs)
+instance Bifunctor StreamF where
+  bimap f g (StreamF x y) = StreamF (f x) (g y)
 
-instance Biapplicative MaybeBoth where
-  bipure x y = MaybeBoth $ Just (x, y)
-  MaybeBoth f <<*>> MaybeBoth a = MaybeBoth $ uncurry bimap <$> f <*> a
+instance Biapplicative ListF where
+  bipure x y = ListF $ Just (x, y)
+  ListF f <<*>> ListF a = ListF $ uncurry bimap <$> f <*> a
 
-instance Biapplicative Multi where
-  bipure x y = Multi x (repeat y)
-  Multi f fs <<*>> Multi x xs = Multi (f x) (zipWith id fs xs)
+instance Biapplicative RoseF where
+  bipure x y = RoseF x (repeat y)
+  RoseF f fs <<*>> RoseF x xs = RoseF (f x) (zipWith id fs xs)
+
+instance Biapplicative StreamF where
+  bipure = StreamF
+  StreamF f g <<*>> StreamF x y = StreamF (f x) (g y)
 
 instance Split [] where
-  data Layer [] a b = MaybeBoth (Maybe (a, b))
+  data Layer [] a b = ListF (Maybe (a, b))
   
-  split  []    = MaybeBoth Nothing
+  split  []    = ListF Nothing
   split (x:xs) = bipure x xs
 
-  unite (MaybeBoth  Nothing)       = []
-  unite (MaybeBoth (Just (x, xs))) = x:xs
+  unite (ListF  Nothing)       = []
+  unite (ListF (Just (x, xs))) = x:xs
 
 instance Split Rose where
-  data Layer Rose a b = Multi a [b]
+  data Layer Rose a b = RoseF a [b]
   
-  split (Rose  x xs) = Multi x xs
+  split (Rose  x xs) = RoseF x xs
   
-  unite (Multi x xs) = Rose  x xs
+  unite (RoseF x xs) = Rose  x xs
+
+instance Split Stream where
+  data Layer Stream a b = StreamF a b
+
+  split (Stream  x xs) = StreamF x xs
+
+  unite (StreamF x xs) = Stream  x xs
 
 -- [(1,4,7),(2,5,8),(3,6,9)]
 -- ([1,2,3],[4,5,6],[7,8,9])
