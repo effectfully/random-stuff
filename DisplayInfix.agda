@@ -16,6 +16,6 @@ flipR : R -> R
 flipR r = record
   { _⊕_ = flip (R._⊕_ r)
   -- The type of the hole is `(n m : ℕ) → m ⊕ n ≡ n ⊕ m` after normalization.
-  -- It would be `(n m : ℕ) → (r R.⊕ m) n ≡ (r R.⊕ n) m` without the Display pragma.
+  -- It would be `(n m : ℕ) → (r R.⊕ m) n ≡ (r R.⊕ n) m` without the `Display` pragma.
   ; comm-⊕ = {!!}
   }
