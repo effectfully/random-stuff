@@ -9,7 +9,7 @@ record R : Set where
     _⊕_    : ℕ -> ℕ -> ℕ
     comm-⊕ : ∀ n m -> n ⊕ m ≡ m ⊕ n
 
-private open module Display-⊕ {r} = R r using (_⊕_)
+private open module Display-⊕ {r} = R r using (_⊕_) public
 {-# DISPLAY R._⊕_ _ n m = n ⊕ m #-}
 
 flipR : R -> R
