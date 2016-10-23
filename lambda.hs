@@ -137,19 +137,19 @@ freeVars (Var s)     = [s]
 freeVars (Lam s e)   = freeVars e  \\ [s]
 freeVars (App e1 e2) = freeVars e1 `union` freeVars e2
 
-subst s1 e2 = subst' where
-    subst' e1@(Var s1')
+subst s1 e2 = go where
+    go e1@(Var s1')
         | s1 == s1' = e2
         | otherwise = e1
-    subst' e1@(Lam s1' e1')
+    go e1@(Lam s1' e1')
         | s1 == s1'                            = e1
-        | s1' == "_" || s1' `notElem` frees_e2 = Lam s1' (subst' e1')
+        | s1' == "_" || s1' `notElem` frees_e2 = Lam s1' (go e1')
         | otherwise                            = Lam s1'' e1'' where
             frees_e2     = freeVars e2
-            frees_e2_e1' = frees_e2 `union` freeVars e1'
+            frees_e2_e1' = [s1] `union` frees_e2 `union` freeVars e1'
             s1'' = until (`notElem` frees_e2_e1') ('\'':) s1'
-            e1'' = subst' (subst s1' (Var s1'') e1')
-    subst' (App e1'1 e1'2) = App (subst' e1'1) (subst' e1'2)
+            e1'' = go (subst s1' (Var s1'') e1')
+    go (App e1'1 e1'2) = App (go e1'1) (go e1'2)
 
 -- Beta-reduction
 
@@ -159,15 +159,15 @@ eager into   (App e1 e2) = case (eager into e1, eager into e2) of
 eager into l@(Lam s e)   = if into then Lam s (eager into e) else l
 eager _    v             = v
 
-byvalue = eager False
-full    = eager True
+whnf = eager False
+nf   = eager True
 
 ------------------------------------------------------------------
 
 main = do
 	s <- getContents
 	putStrLn $ case parse parseTerm s of
-		Just (t, _) -> pretty $ full $ byvalue t
+		Just (t, _) -> pretty $ nf t
 		_           -> "Nothing"
 
 -- Example input:
