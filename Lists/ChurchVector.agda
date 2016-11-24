@@ -32,6 +32,9 @@ refl = λ A x P p -> p x
 subst : ∀ A -> (P : A -> Set) -> (x y : A) -> Eq A x y -> P x -> P y
 subst = λ A P x y q -> q (λ x y -> P x -> P y) (λ _ p -> p)
 
+tsbus : ∀ A -> (x y : A) -> ((P : A -> Set) -> P x -> P y) -> Eq A x y
+tsbus = λ A x y f P r -> f (P x) (r x)
+
 one   = suc zero
 two   = suc one
 three = suc two
