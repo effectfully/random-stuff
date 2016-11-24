@@ -29,10 +29,13 @@ Eq = λ (A : Set) (x y : A) ->
 refl : ∀ A x -> Eq A x x
 refl = λ A x P p -> p x
 
-subst : ∀ A -> (P : A -> Set) -> (x y : A) -> Eq A x y -> P x -> P y
-subst = λ A P x y q -> q (λ x y -> P x -> P y) (λ _ p -> p)
+Leibniz = λ (A : Set) (x y : A) ->
+  (P : A -> Set) -> P x -> P y
 
-tsbus : ∀ A -> (x y : A) -> ((P : A -> Set) -> P x -> P y) -> Eq A x y
+subst : ∀ A -> (x y : A) -> Eq A x y -> Leibniz A x y
+subst = λ A x y q P -> q (λ x y -> P x -> P y) (λ _ p -> p)
+
+tsbus : ∀ A -> (x y : A) -> Leibniz A x y -> Eq A x y
 tsbus = λ A x y f P r -> f (P x) (r x)
 
 one   = suc zero
@@ -55,4 +58,4 @@ test2 : Eq _ (plus one two) three
 test2 = refl _ _
 
 test3 : ∀ (A : Set) n m -> Eq Nat n m -> Vec A n -> Vec A m
-test3 = λ A -> subst Nat (Vec A)
+test3 = λ A n m q -> subst Nat n m q (Vec A)
