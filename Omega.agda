@@ -60,9 +60,9 @@ a ⇒ b = a ‵π‵ const b
 Type⁺ : ℕ -> Set
 Type⁺ n = ∀ {m} -> Type (n + m)
 
-liftᵇ : Type 0 -> Type⁺ 0
-liftᵇ a {0}     = a
-liftᵇ a {suc m} = wrap (emb (liftᵇ a))
+lift₀ : Type 0 -> Type⁺ 0
+lift₀ a {0}     = a
+lift₀ a {suc m} = wrap (emb (lift₀ a))
 
 lift : ∀ {n} -> Type n -> Type⁺ n
 lift {n} a {m} = subst Type (+-comm m n) (go m a) where
@@ -71,7 +71,7 @@ lift {n} a {m} = subst Type (+-comm m n) (go m a) where
   go (suc m) a = wrap (emb (go m a))
 
 nat : Type⁺ 0
-nat = liftᵇ (wrap (emb natᵇ))
+nat = lift₀ (wrap (emb natᵇ))
 
 type : ∀ n -> Type⁺ (suc n)
 type n = lift {suc n} (wrap prev)
