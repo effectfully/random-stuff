@@ -30,13 +30,14 @@ mutual
   ⟦ U / prev  ⟧ᵤ = Univ U
   ⟦ U / emb c ⟧ᵤ = ⟦ U / c ⟧
 
-data Type₀ : Set where
-  nat₀ : Type₀
+data Base : Set where
+  natᵇ : Base -- There is no `\_b`
 
-⟦_⟧₀ : Type₀ -> Set
-⟦ nat₀ ⟧₀ = ℕ
+⟦_⟧ᵇ : Base -> Set
+⟦ natᵇ ⟧ᵇ = ℕ
 
-{-# TERMINATING #-}
+{-# TERMINATING #-} -- We only need this for good inference. Everything can be rewritten without
+                    -- the pragma at the cost of providing more explicit arguments to functions.
 mutual
   Type : ℕ -> Set
   Type = Apply (Typeᵤ ∘ univ)
@@ -45,7 +46,7 @@ mutual
   ⟦_⟧ = ⟦ _ /_⟧ᵤ ∘ unwrap
 
   univ : ℕ -> Universe
-  univ  0      = record { Univ = Type₀  ; ⟦_/_⟧ = ⟦_⟧₀ }
+  univ  0      = record { Univ = Base   ; ⟦_/_⟧ = ⟦_⟧ᵇ }
   univ (suc n) = record { Univ = Type n ; ⟦_/_⟧ = ⟦_⟧  }
 
 infixr 5 _‵π‵_ _⇒_
@@ -59,9 +60,9 @@ a ⇒ b = a ‵π‵ const b
 Type⁺ : ℕ -> Set
 Type⁺ n = ∀ {m} -> Type (n + m)
 
-lift₀ : Type 0 -> Type⁺ 0
-lift₀ a {0}     = a
-lift₀ a {suc m} = wrap (emb (lift₀ a))
+liftᵇ : Type 0 -> Type⁺ 0
+liftᵇ a {0}     = a
+liftᵇ a {suc m} = wrap (emb (liftᵇ a))
 
 lift : ∀ {n} -> Type n -> Type⁺ n
 lift {n} a {m} = subst Type (+-comm m n) (go m a) where
@@ -70,7 +71,7 @@ lift {n} a {m} = subst Type (+-comm m n) (go m a) where
   go (suc m) a = wrap (emb (go m a))
 
 nat : Type⁺ 0
-nat = lift₀ (wrap (emb nat₀))
+nat = liftᵇ (wrap (emb natᵇ))
 
 type : ∀ n -> Type⁺ (suc n)
 type n = lift {suc n} (wrap prev)
@@ -93,6 +94,9 @@ typeₒ n = emb {suc n} (wrap prev)
 
 ω : Ω
 ω = π natₒ typeₒ
+
+test₀ : Type 0
+test₀ = nat ⇒ nat
 
 test₁ : ⟦ Type 3 ∋ type 1 ⟧ ≡ Type 1
 test₁ = refl
