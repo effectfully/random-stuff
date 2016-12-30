@@ -23,18 +23,14 @@ mutual
     π σ  : ∀ a -> (⟦ U / a ⟧ᵤ -> Typeᵤ U) -> Typeᵤ U
     prev : Typeᵤ U
     emb  : Univ U -> Typeᵤ U
+    natᵤ : Typeᵤ U
 
   ⟦_/_⟧ᵤ : ∀ U -> Typeᵤ U -> Set
   ⟦ U / π a b ⟧ᵤ = ∀   x -> ⟦ U / b x ⟧ᵤ
   ⟦ U / σ a b ⟧ᵤ = ∃ λ x -> ⟦ U / b x ⟧ᵤ
   ⟦ U / prev  ⟧ᵤ = Univ U
   ⟦ U / emb c ⟧ᵤ = ⟦ U / c ⟧
-
-data Base : Set where
-  natᵇ : Base -- There is no `\_b`
-
-⟦_⟧ᵇ : Base -> Set
-⟦ natᵇ ⟧ᵇ = ℕ
+  ⟦ U / natᵤ  ⟧ᵤ = ℕ
 
 {-# TERMINATING #-} -- We only need this for good inference. Everything can be rewritten without
                     -- the pragma at the cost of providing more explicit arguments to functions.
@@ -46,8 +42,8 @@ mutual
   ⟦_⟧ = ⟦ _ /_⟧ᵤ ∘ unwrap
 
   univ : ℕ -> Universe
-  univ  0      = record { Univ = Base   ; ⟦_/_⟧ = ⟦_⟧ᵇ }
-  univ (suc n) = record { Univ = Type n ; ⟦_/_⟧ = ⟦_⟧  }
+  univ  0      = record { Univ = ⊥      ; ⟦_/_⟧ = ⊥-elim }
+  univ (suc n) = record { Univ = Type n ; ⟦_/_⟧ = ⟦_⟧    }
 
 infixr 5 _‵π‵_ _⇒_
 
@@ -71,7 +67,7 @@ lift {n} a {m} = subst Type (+-comm m n) (go m a) where
   go (suc m) a = wrap (emb (go m a))
 
 nat : Type⁺ 0
-nat = lift₀ (wrap (emb natᵇ))
+nat = lift₀ (wrap natᵤ)
 
 type : ∀ n -> Type⁺ (suc n)
 type n = lift {suc n} (wrap prev)
