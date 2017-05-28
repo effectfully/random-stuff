@@ -1,3 +1,88 @@
+-- This is STLC with a bit of reflection.
+
+-- We have the `□` modality: a term of type `□ σ` is a syntactic representation
+-- of the corresponding term of type `σ`. Main things we can do with such a term are:
+--   1) evaluate it using `asse` to get its meaning which is a usual lambda term
+--
+--     asse : ∀ {σ}   -> Γ ⊢ □ σ ⇒ σ
+--
+--   2) fold over it using `elim`. `elim` has this signature:
+-- 
+--     elim : ∀ {σ τ}
+--          -> Γ ⊢ (τ ⇒ τ ⇒ τ)
+--             -- ^ apply this when there are two recursive calls
+--           ⇒ (nat ⇒ τ)
+--             -- ^ apply this to `i` in `var i`
+--           ⇒ τ
+--             -- ^ return this when there is nothing to return otherwise
+--           ⇒ □ σ
+--             -- ^ a term to fold over
+--           ⇒ τ
+-- 
+-- i.e. `elim` is syntax for some form of right fold. Its meaning is given by `foldTerm`
+-- (modulo some reification and evaluation).
+
+-- We have monadic quotation. With non-monadic quotation it's not possible to substitute
+-- under `quot`, e.g. no matter to what `x` in `λ x -> quot (var x)` will be instantiated later:
+-- `quot (var x)` won't be affected and will always represent the same syntactic object --
+-- the variable `x`. With monadic quotation we can instantiate `x` to, say, `g · y` and
+-- `quot (var x)` will accordingly change to `quot (g · y)`.
+-- So we have quotation in any context that runs in the `q` monad:
+
+--   quot : ∀ {σ} -> Γ ⊢ σ -> Γ ⊢ q (□ σ)
+
+-- and a way to eliminate this monad:
+
+--   runq : ∀ {σ} -> Term (q σ) -> Γ ⊢ σ
+
+-- which maps a *closed* term in the monadic context into just a term.
+-- I.e. when all variables in a term are instantiated, we can remove the `q` monad.
+-- So this monad is like a "suspender": you can't purely inspect non-closed syntactic values
+-- (i.e. ones which types are modal), because quotation happens in the monad, but
+-- you can inspect closed syntactic values, because that monad is runnable for such values.
+
+-- `q` as a monad has `return` and `bind`:
+
+--   ret  : ∀ {σ}   -> Γ ⊢ σ ⇒ q σ
+--   bind : ∀ {σ τ} -> Γ ⊢ q σ ⇒ (σ ⇒ q τ) ⇒ q τ
+
+-- This all is very similar to the Agda's reflection machinery where we have usual functions and
+-- also macroses which return results in the `TC` monad. And in order to run a macros and return a pure value,
+-- the macros must be fully applied.
+
+-- This all gives you the ability to write generic functions that receive some arguments,
+-- quote any number of them and do something on their syntactic representation.
+-- Consider e.g. the `countVars` function defined at the bottom of the file:
+
+-- countVars : ∀ {σ} -> Term⁺ (σ ⇒ q nat)
+-- countVars = ƛ fmap · (elim · plus · (ƛ s · z) · z) · quot (var vz)
+
+-- (`fmap` is defined in terms of `ret` and `bind` as usual).
+-- The function receives a term, quotes it (which gives us a term of type `q (□ σ)`),
+-- and maps the resulting monadic value using `elim` which is parametrized as follows:
+--   1) where there are two recursive positions in a term (like in `f · x` as `f` and `x` are both terms),
+--      sum the results of corresponding recursive calls to `foldTerm` to which `elim` elaborates
+--   2) when there is a variable, return `1`
+--   3) otherwise and when impossible to proceed further recursively, return `0`.
+-- I.e. this entire computation returns the number of variables in a term.
+-- And hence `countVars` does the same, but for any term it receives and monadically,
+-- because we need to instantiate that term later and not just count the number of variables
+-- in `quot (var vz)` which would be silly, because it's a boring constant: `1`.
+
+-- Since `countVars` is a proper target language term, we can apply it to itself:
+
+-- countVarsCountVars : Term nat
+-- countVarsCountVars = runq $ countVars · countVars {nat}
+
+-- and evaluate the resulting term in the meta-language:
+
+-- testCountVars : eval countVarsCountVars ≡ 7
+-- testCountVars = refl
+
+-- The result is due to the definition of `countVars` which contains `quot` applied to one variable
+-- and functions `fmap` and `plus` which both contain `3` `var`s each (see the definition below).
+-- Hence the total is `7`.
+
 open import Function
 open import Data.Nat.Base as Nat hiding (fold)
 
@@ -135,7 +220,7 @@ module _ {A : Set} (g : A -> A -> A) (f : ℕ -> A) (x : A) where
 reifyℕ : ℕ -> Term nat
 reifyℕ = Nat.fold z (s ·_)
 
-{-# TERMINATING #-} -- I have no idea.
+{-# TERMINATING #-} -- I have no idea how to fix this.
 mutual
   ⟦_⟧ : ∀ {Γ σ} -> Γ ⊢ σ -> Env Γ -> ⟦ σ ⟧ᵗ
   ⟦ var v  ⟧ ψ = eval (lookup v ψ)
@@ -190,6 +275,5 @@ testPlus = refl
 countVarsCountVars : Term⁺ nat
 countVarsCountVars = runq $ countVars · countVars {nat}
 
--- `quot` is applied to 1 variable, `fmap` contains `3` and `plus` contains 3, hence 7.
 testCountVars : eval countVarsCountVars ≡ 7
 testCountVars = refl
