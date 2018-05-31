@@ -1,12 +1,12 @@
 infixr 5 _⇒_
-infixl 6 _▻_ _▻▻_
-infix  3 _⊢_ _∈_
+infixl 6 _▻_
+infix  3 _⊢_ _∈_ _⊑_
 infixr 5 vs_
 infixr 4 ƛ_
 infixl 6 _·_
 
 data Type : Set where
-  ι   : Type
+  ⋆   : Type
   _⇒_ : Type -> Type -> Type
 
 data Con : Set where
@@ -20,38 +20,36 @@ data _∈_ σ : Con -> Set where
 data _⊢_ Γ : Type -> Set where
   var : ∀ {σ}   -> σ ∈ Γ     -> Γ ⊢ σ
   ƛ_  : ∀ {σ τ} -> Γ ▻ σ ⊢ τ -> Γ ⊢ σ ⇒ τ
-  _·_ : ∀ {σ τ} -> Γ ⊢ σ ⇒ τ -> Γ ⊢ σ     -> Γ ⊢ τ
+  _·_ : ∀ {σ τ} -> Γ ⊢ σ ⇒ τ -> Γ ⊢ σ      -> Γ ⊢ τ
 
 Term : Type -> Set
 Term σ = ε ⊢ σ
 
-_▻▻_ : Con -> Con -> Con
-Γ ▻▻  ε      = Γ
-Γ ▻▻ (Δ ▻ σ) = Γ ▻▻ Δ ▻ σ
-
-postulate
-  naive-lam : ∀ {Γ σ τ} -> ((∀ {Δ} -> Γ ▻ σ ▻▻ Δ ⊢ σ) -> Γ ▻ σ ⊢ τ) -> Γ ⊢ σ ⇒ τ
-
-yellow : Term (ι ⇒ ι)
-yellow = naive-lam λ x -> x
-
-postulate
-  _extends_ : Con -> Con -> Set
-  
+data _⊑_ Γ : Con -> Set where
   instance
-    extends-stop : ∀ {Γ} -> Γ extends Γ
-    extends-skip : ∀ {Γ Δ σ} {{_ : Δ extends Γ}} -> (Δ ▻ σ) extends Γ
-    
-  lam : ∀ {Γ σ τ} -> ((∀ {Δ} {{_ : Δ extends (Γ ▻ σ)}} -> Δ ⊢ σ) -> Γ ▻ σ ⊢ τ) -> Γ ⊢ σ ⇒ τ
+    stop : Γ ⊑ Γ
+    skip : ∀ {Δ σ} -> Γ ⊑ Δ -> Γ ⊑ Δ ▻ σ
 
-I : Term (ι ⇒ ι)
+fit : ∀ {Δ Γ σ} -> Γ ▻ σ ⊑ Δ -> σ ∈ Δ
+fit  stop      = vz
+fit (skip emb) = vs (fit emb)
+
+lam : ∀ {Γ σ τ} -> ((∀ {Δ} {{_ : Γ ▻ σ ⊑ Δ}} -> Δ ⊢ σ) -> Γ ▻ σ ⊢ τ) -> Γ ⊢ σ ⇒ τ
+lam k = ƛ k λ {{emb}} -> var (fit emb)
+
+
+
+I : Term (⋆ ⇒ ⋆)
 I = lam λ x -> x
 
-K : Term (ι ⇒ ι ⇒ ι)
+K : Term (⋆ ⇒ ⋆ ⇒ ⋆)
 K = lam λ x -> lam λ y -> x
 
-A : Term ((ι ⇒ ι) ⇒ ι ⇒ ι)
-A = lam λ f -> lam λ x -> f {{extends-skip {{extends-stop}}}} · x {{extends-stop}}
+A : Term ((⋆ ⇒ ⋆) ⇒ ⋆ ⇒ ⋆)
+A = lam λ f -> lam λ x -> f · x
 
-loop : Term ((ι ⇒ ι) ⇒ ι ⇒ ι)
-loop = lam λ f -> lam λ x -> f · x
+O : Term (((⋆ ⇒ ⋆) ⇒ ⋆) ⇒ (⋆ ⇒ ⋆) ⇒ ⋆)
+O = lam λ g -> lam λ f -> f · (g · f)
+
+O-η : Term (((⋆ ⇒ ⋆) ⇒ ⋆) ⇒ (⋆ ⇒ ⋆) ⇒ ⋆)
+O-η = lam λ g -> lam λ f -> f · (g · lam λ x -> f · x)
