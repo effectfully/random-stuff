@@ -9,9 +9,11 @@ data Type : Set where
   ⋆   : Type
   _⇒_ : Type -> Type -> Type
 
+-- Contexts are snoc-lists
+
 data Con : Set where
   ε   : Con
-  _▻_ : Con -> Type -> Con
+  _▻_ : (Γ : Con) (τ : Type) -> Con
 
 data _∈_ σ : Con -> Set where
   vz  : ∀ {Γ}   -> σ ∈ Γ ▻ σ
@@ -25,23 +27,26 @@ data _⊢_ Γ : Type -> Set where
 Term : Type -> Set
 Term σ = ε ⊢ σ
 
-lastDef : Type -> Con -> Type
-lastDef σ  ε      = σ
-lastDef σ (Γ ▻ τ) = τ
+-- A cons that does not match on the context.
+-- This is the main trick to make inference work.
 
-mutual
-  cons : Type -> Con -> Con
-  cons σ Γ = shift σ Γ ▻ lastDef σ Γ
+cons : Type -> Con -> Con
+cons σ Γ = init∘cons σ Γ ▻ last∘cons σ Γ
+  where
+    last∘cons : Type -> Con -> Type
+    last∘cons σ  ε      = σ
+    last∘cons σ (Γ ▻ τ) = τ
 
-  shift : Type -> Con -> Con
-  shift σ  ε      = ε
-  shift σ (Γ ▻ τ) = cons σ Γ
+    init∘cons : Type -> Con -> Con
+    init∘cons σ  ε      = ε
+    init∘cons σ (Γ ▻ τ) = cons σ Γ
 
 _▻▻_ : Con -> Con -> Con
 ε     ▻▻ Δ = Δ
-Γ ▻ σ ▻▻ Δ = Γ ▻▻ cons σ Δ -- Inference would be better with `Γ ▻▻ shift σ Δ ▻ lastDef σ Δ`,
-                           -- but then `shift` must use something else than `cons`,
-                           -- and I can't figure out what it must use.
+Γ ▻ σ ▻▻ Δ = Γ ▻▻ cons σ Δ
+  -- Inference would be better with `(Γ ▻▻ init∘cons σ Δ) ▻ last∘cons σ Δ`,
+  -- but then `init∘cons` must use something else than `cons`,
+  -- and I can't figure out what it must use.
 
 coe : ∀ {α Δ σ} (A : Con -> Set α) Γ -> A (Γ ▻▻ Δ ▻ σ) -> A (Γ ▻▻ (Δ ▻ σ))
 coe A  ε      x = x
