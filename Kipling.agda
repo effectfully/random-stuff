@@ -13,9 +13,8 @@ infixr 7 ƛ_ η_
 infixr 8 vs_
 infixl 8 _·_
 
--- We could write `⟦ pair x y ⟧ = ᵏ′ _,_ ˢ ⟦ x ⟧ ˢ ⟦ y ⟧`.
--- ᵏ′ : ∀ {α β} {A : Set α} {B : A -> Set β} -> (∀ {x} -> B x) -> ∀ x -> B x
--- ᵏ′ y x = y
+ᵏ′ : ∀ {α β} {A : Set α} {B : A -> Set β} -> (∀ {x} -> B x) -> ∀ x -> B x
+ᵏ′ y x = y
 
 elimBool : ∀ {π} -> (P : Bool -> Set π) -> P true -> P false -> ∀ b -> P b
 elimBool P x y true  = x
@@ -68,7 +67,7 @@ mutual
   data Type {Γ} : IU Γ -> Set where
     botᵗ  : Type (ᵏ bot)
     topᵗ  : Type (ᵏ top)
-    boolᵗ : Type (ᵏ bool)    
+    boolᵗ : Type (ᵏ bool)
     natᵗ  : Type (ᵏ nat)
     _×ᵗ_  : ∀ {A B} -> Type A -> Type B -> Type (σ ∘ A ˢ ̂ B)
     _⇒ᵗ_  : ∀ {A B} -> Type A -> Type B -> Type (π ∘ A ˢ ̂ B)
@@ -108,9 +107,11 @@ mutual
   ⟦ ze            ⟧ = ᵏ 0
   ⟦ su n          ⟧ = suc ∘ ⟦ n ⟧
   ⟦ elimn P f x n ⟧ = elimℕ    ∘ ̂ ⟦ P ⟧ᵗ ˢ ⟦ f ⟧ ˢ ⟦ x ⟧ ˢ ⟦ n ⟧
-  ⟦ pair x y      ⟧ = _,_ ∘ ⟦ x ⟧ ˢ ⟦ y ⟧
-  ⟦ fst p         ⟧ = proj₁ ∘ ⟦ p ⟧
-  ⟦ snd p         ⟧ = proj₂ ∘ ⟦ p ⟧
+  -- Not shortcutting `_ᵏ′_` and `_ˢ_` as `_∘_` just to show that everything works with the
+  -- dependent `_ᵏ′_`. Make it non-dependent by removing ′ and you'll see an error.
+  ⟦ pair x y      ⟧ = ᵏ′ _,_ ˢ ⟦ x ⟧ ˢ ⟦ y ⟧
+  ⟦ fst p         ⟧ = ᵏ′ proj₁ ˢ ⟦ p ⟧
+  ⟦ snd p         ⟧ = ᵏ′ proj₂ ˢ ⟦ p ⟧
   ⟦ ƛ b           ⟧ = ̂ ⟦ b ⟧
   ⟦ f · x         ⟧ = ⟦ f ⟧ ˢ ⟦ x ⟧
 
