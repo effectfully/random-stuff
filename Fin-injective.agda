@@ -1,4 +1,5 @@
 -- This is inspired by https://github.com/luqui/experiments/blob/master/Fin-inj.agda
+-- No longer type checks.
 
 open import Function
 open import Relation.Nullary
@@ -6,8 +7,8 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Binary.HeterogeneousEquality using (refl ; _≅_ ; _≇_ )
 open import Data.Empty
 open import Data.Nat
-open import Data.Fin as F hiding (_+_)
-open import Data.Nat.Properties.Simple
+open import Data.Fin as F hiding (_+_; _≟_)
+open import Data.Nat.Properties
 
 unsubst : ∀ {α γ} {A : Set α} {C : A -> Set γ} {i j : A} (p : i ≡ j) {x : C i} {y : C j}
         -> subst C p x ≡ y -> x ≅ y

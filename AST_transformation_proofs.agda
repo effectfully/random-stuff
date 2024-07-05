@@ -1,8 +1,10 @@
 -- This is related to http://stackoverflow.com/questions/24475546/non-tedious-ast-transformation-proofs-in-agda/
 
+module AST_transformation_proofs where
+
 open import Level
 open import Function
-open import Relation.Nullary.Core
+open import Relation.Nullary hiding (Dec)
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 open import Data.Unit
@@ -10,7 +12,9 @@ open import Data.Bool
 open import Data.Product hiding (map)
 open import Data.Nat hiding (_⊔_)
 open import Data.Maybe as M hiding (map)
+open import Data.Maybe.Categorical as M
 import Data.List as L
+import Data.List.Categorical as L
 open import Data.Vec hiding (_⊛_)
 open import Category.Monad
 
@@ -39,12 +43,12 @@ lhead z (x L.∷ _) = x
 -- Decidability
 
 data Dec' {p} (P : Set p) : Set p where
-  yes : (p : P) → Dec' P
-  no  : Dec' P
+  yes' : (p : P) → Dec' P
+  no'  : Dec' P
 
 dec'ToMaybe⊤ : ∀ {a} {A : Set a} → Dec' A → Maybe ⊤
-dec'ToMaybe⊤ (yes x) = just _
-dec'ToMaybe⊤  no     = nothing
+dec'ToMaybe⊤ (yes' x) = just _
+dec'ToMaybe⊤  no'     = nothing
 
 Decidable' : ∀ {a b ℓ} {A : Set a} {B : Set b} → REL A B ℓ → Set _
 Decidable' _∼_ = ∀ x y → Dec' (x ∼ y)
@@ -91,7 +95,7 @@ record Proving {α β : Level} (A : Set α) (B : Set β) : Set (α ⊔ β) where
     generalize : ∀ f -> (∀ e -> meaning (f e) ≡ meaning e)
                -> ∀ e -> meaning (transform f e) ≡ meaning e
 
-add : {α : Level} {A : Set α} {l : ℕ} -> ℕ -> transT A -> transTss A l -> transTss A l  
+add : {α : Level} {A : Set α} {l : ℕ} -> ℕ -> transT A -> transTss A l -> transTss A l
 add  _      d  []      = []
 add  0      d (x ∷ xs) = (d L.∷ x) ∷ xs
 add (suc n) d (x ∷ xs) = x ∷ add n d xs
@@ -111,8 +115,8 @@ getSubterms : {α β : Level} {A : Set α} {B : Set β}
 getSubterms pr n f e
     with directionses pr n f
 ... | dss with flip (mapM M.monad) dss
-      (L.sequence M.monad ∘ neighbWith (λ f g -> dec'ToMaybe⊤ $ Proving._≟A_ pr (f e) (g e)))
-... | nothing = nothing 
+      (L.TraversableM.sequenceM M.monad ∘ neighbWith (λ f g -> dec'ToMaybe⊤ $ Proving._≟A_ pr (f e) (g e)))
+... | nothing = nothing
 ... | just _  = just (map (λ fs -> lhead id fs e) dss)
 
 -- Transforming
@@ -127,8 +131,8 @@ replace' pr n f e with getSubterms pr n f e
 replace' pr n f e | nothing = e
 replace' pr n f e | just xs with vecApply n f xs
 replace' pr n f e | just xs |  e' , e'' with Proving._≟A_ pr e e'
-replace' pr n f e | just xs |  e' , e'' | no       = e
-replace' pr n f e | just xs | .e  , e'' | yes refl = e''
+replace' pr n f e | just xs |  e' , e'' | no'       = e
+replace' pr n f e | just xs | .e  , e'' | yes' refl = e''
 
 replace : {α β : Level} {A : Set α} {B : Set β}
         -> Proving A B -> (n : ℕ) -> nary n A (A × A) -> A -> A
@@ -156,8 +160,8 @@ sound' pr n f p e with getSubterms pr n f e
 sound' pr n f p e | nothing = refl
 sound' pr n f p e | just xs with vecApply n f xs | vecApplyProof pr p xs
 sound' pr n f p e | just xs |  e' , e'' | p' with Proving._≟A_ pr e e'
-sound' pr n f p e | just xs |  e' , e'' | p' | no       = refl
-sound' pr n f p e | just xs | .e  , e'' | p' | yes refl = sym p'
+sound' pr n f p e | just xs |  e' , e'' | p' | no'       = refl
+sound' pr n f p e | just xs | .e  , e'' | p' | yes' refl = sym p'
 
 sound : {α β : Level} {A : Set α} {B : Set β}
       -> (pr : Proving A B) -> (n : ℕ) -> (f : nary n A (A × A)) -> soundnessProof pr n f
@@ -178,30 +182,30 @@ data AExp : Set where
 
 aeval : AExp → ℕ
 aeval (ANum   x)   = x
-aeval (APlus  a b) = aeval a + aeval b 
-aeval (AMinus a b) = aeval a ∸ aeval b  
+aeval (APlus  a b) = aeval a + aeval b
+aeval (AMinus a b) = aeval a ∸ aeval b
 aeval (AMult  a b) = aeval a * aeval b
 
 _≟AExp_ : Decidable' {A = AExp} _≡_
 ANum   x     ≟AExp ANum    y      with x Data.Nat.≟ y
-ANum   x     ≟AExp ANum    y      | no  _    = no
-ANum   x     ≟AExp ANum   .x      | yes refl = yes refl 
+ANum   x     ≟AExp ANum    y      | no  _    = no'
+ANum   x     ≟AExp ANum   .x      | yes refl = yes' refl
 APlus  e1 e2 ≟AExp APlus   e3  e4 with e1 ≟AExp e3
-APlus  e1 e2 ≟AExp APlus   e3  e4 | no       = no
-APlus  e1 e2 ≟AExp APlus  .e1  e4 | yes refl with e2 ≟AExp e4
-APlus  e1 e2 ≟AExp APlus  .e1  e4 | yes refl | no       = no
-APlus  e1 e2 ≟AExp APlus  .e1 .e2 | yes refl | yes refl = yes refl
+APlus  e1 e2 ≟AExp APlus   e3  e4 | no'       = no'
+APlus  e1 e2 ≟AExp APlus  .e1  e4 | yes' refl with e2 ≟AExp e4
+APlus  e1 e2 ≟AExp APlus  .e1  e4 | yes' refl | no'       = no'
+APlus  e1 e2 ≟AExp APlus  .e1 .e2 | yes' refl | yes' refl = yes' refl
 AMinus e1 e2 ≟AExp AMinus  e3  e4 with e1 ≟AExp e3
-AMinus e1 e2 ≟AExp AMinus  e3  e4 | no       = no
-AMinus e1 e2 ≟AExp AMinus .e1  e4 | yes refl with e2 ≟AExp e4
-AMinus e1 e2 ≟AExp AMinus .e1  e4 | yes refl | no       = no
-AMinus e1 e2 ≟AExp AMinus .e1 .e2 | yes refl | yes refl = yes refl
+AMinus e1 e2 ≟AExp AMinus  e3  e4 | no'       = no'
+AMinus e1 e2 ≟AExp AMinus .e1  e4 | yes' refl with e2 ≟AExp e4
+AMinus e1 e2 ≟AExp AMinus .e1  e4 | yes' refl | no'       = no'
+AMinus e1 e2 ≟AExp AMinus .e1 .e2 | yes' refl | yes' refl = yes' refl
 AMult  e1 e2 ≟AExp AMult   e3  e4 with e1 ≟AExp e3
-AMult  e1 e2 ≟AExp AMult   e3  e4 | no       = no
-AMult  e1 e2 ≟AExp AMult  .e1  e4 | yes refl with e2 ≟AExp e4
-AMult  e1 e2 ≟AExp AMult  .e1  e4 | yes refl | no       = no
-AMult  e1 e2 ≟AExp AMult  .e1 .e2 | yes refl | yes refl = yes refl
-_            ≟AExp _              = no
+AMult  e1 e2 ≟AExp AMult   e3  e4 | no'       = no'
+AMult  e1 e2 ≟AExp AMult  .e1  e4 | yes' refl with e2 ≟AExp e4
+AMult  e1 e2 ≟AExp AMult  .e1  e4 | yes' refl | no'       = no'
+AMult  e1 e2 ≟AExp AMult  .e1 .e2 | yes' refl | yes' refl = yes' refl
+_            ≟AExp _              = no'
 
 transform : (AExp → AExp) → AExp → AExp
 transform f (ANum x)     = f (ANum x)
@@ -221,7 +225,7 @@ right (APlus  a b) = b
 right (AMinus a b) = b
 right (AMult  a b) = b
 
-directions : AExp -> AExp -> transTs AExp 
+directions : AExp -> AExp -> transTs AExp
 directions (ANum   _)     (ANum   _)     = L.[]
 directions (APlus  a1 a2) (APlus  b1 b2) =
   L.map (λ f -> f ∘ left) (directions a1 b1) L.++ L.map (λ f -> f ∘ right) (directions a2 b2)
@@ -271,7 +275,7 @@ opt-0+ : AExp → AExp
 opt-0+ = replace AExpPr 1 0+-func
 
 test-opt-0+ : opt-0+ (AMult (APlus (ANum 0) (ANum 1)) (ANum 2)) ≡ AMult (ANum 1) (ANum 2)
-test-opt-0+ = refl 
+test-opt-0+ = refl
 
 opt-0+-sound : ∀ e → aeval (opt-0+ e) ≡ aeval e
 opt-0+-sound = sound AExpPr 1 0+-func (λ _ -> refl)
@@ -291,7 +295,7 @@ test-opt-fancy :
   in let b1 = ANum 1
   in let b2 = AMinus b1 b1
   in opt-fancy (AMinus (AMult (APlus a1 a2) (APlus b1 b2)) (ANum 0)) ≡
-    (AMinus (APlus (APlus (APlus (AMult a1 b1) (AMult a1 b2)) (AMult a2 b1)) (AMult a2 b2)) (ANum 0)) 
+    (AMinus (APlus (APlus (APlus (AMult a1 b1) (AMult a1 b2)) (AMult a2 b1)) (AMult a2 b2)) (ANum 0))
 test-opt-fancy = refl
 
 fancy-lem : ∀ a1 a2 b1 b2 -> (a1 + a2) * (b1 + b2) ≡ a1 * b1 + a1 * b2 + a2 * b1 + a2 *  b2
@@ -300,8 +304,8 @@ fancy-lem = solve
   (λ a1 a2 b1 b2 → (a1 :+ a2) :* (b1 :+ b2) := a1 :* b1 :+ a1 :* b2 :+ a2 :* b1 :+ a2 :* b2)
   refl
     where
-      import Data.Nat.Properties
-      open Data.Nat.Properties.SemiringSolver
+      open import Data.Nat.Solver
+      open +-*-Solver
 
 opt-fancy-sound : ∀ e → aeval (opt-fancy e) ≡ aeval e
 opt-fancy-sound = sound AExpPr 4 fancy-func
