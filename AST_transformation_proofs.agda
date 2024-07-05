@@ -312,3 +312,6 @@ fancy-lem = solve
 opt-fancy-sound : ∀ e → aeval (opt-fancy e) ≡ aeval e
 opt-fancy-sound = sound AExpPr 4 fancy-func
   (λ a1 a2 b1 b2 -> fancy-lem (aeval a1) (aeval a2) (aeval b1) (aeval b2))
+
+-- This whole approach isn't sound unless it's proven that `replace pr n f (fst (f e1 e2 ... en))`
+-- is equal to `snd (f e1 e2 ... en)` or something of this sort, which is quite hard I assume.
