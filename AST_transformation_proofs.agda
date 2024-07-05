@@ -283,8 +283,9 @@ opt-0+-sound = sound AExpPr 1 0+-func (λ _ -> refl)
 -- Example 3
 
 fancy-func : (_ _ _ _ : AExp) -> AExp × AExp
-fancy-func = λ a1 a2 b1 b2 -> AMult (APlus a1 a2) (APlus b1 b2) ==
-  APlus (APlus (APlus (AMult a1 b1) (AMult a1 b2)) (AMult a2 b1)) (AMult a2 b2)
+fancy-func = λ a1 a2 b1 b2 ->
+  APlus (APlus (APlus (AMult a1 b1) (AMult a1 b2)) (AMult a2 b1)) (AMult a2 b2) ==
+    AMult (APlus a1 a2) (APlus b1 b2)
 
 opt-fancy : AExp → AExp
 opt-fancy = replace AExpPr 4 fancy-func
@@ -294,14 +295,15 @@ test-opt-fancy :
   in let a2 = AMinus a1 a1
   in let b1 = ANum 1
   in let b2 = AMinus b1 b1
-  in opt-fancy (AMinus (AMult (APlus a1 a2) (APlus b1 b2)) (ANum 0)) ≡
-    (AMinus (APlus (APlus (APlus (AMult a1 b1) (AMult a1 b2)) (AMult a2 b1)) (AMult a2 b2)) (ANum 0))
+  in opt-fancy
+         (AMinus (APlus (APlus (APlus (AMult a1 b1) (AMult a1 b2)) (AMult a2 b1)) (AMult a2 b2)) (ANum 0)) ≡
+       (AMinus (AMult (APlus a1 a2) (APlus b1 b2)) (ANum 0))
 test-opt-fancy = refl
 
-fancy-lem : ∀ a1 a2 b1 b2 -> (a1 + a2) * (b1 + b2) ≡ a1 * b1 + a1 * b2 + a2 * b1 + a2 *  b2
+fancy-lem : ∀ a1 a2 b1 b2 -> a1 * b1 + a1 * b2 + a2 * b1 + a2 * b2 ≡ (a1 + a2) * (b1 + b2)
 fancy-lem = solve
   4
-  (λ a1 a2 b1 b2 → (a1 :+ a2) :* (b1 :+ b2) := a1 :* b1 :+ a1 :* b2 :+ a2 :* b1 :+ a2 :* b2)
+  (λ a1 a2 b1 b2 → a1 :* b1 :+ a1 :* b2 :+ a2 :* b1 :+ a2 :* b2 := (a1 :+ a2) :* (b1 :+ b2))
   refl
     where
       open import Data.Nat.Solver
