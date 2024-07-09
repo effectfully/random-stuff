@@ -344,9 +344,14 @@ replace'-0+-func-is-sound e with e ≟AExp e | isEqualSelf e
 {-# REWRITE isEqualSelf #-}
 
 replace'-ex1-func-is-sound-using-rewrite :
-  ∀ e1 e2 -> replace' AExpPr 2 ex1-func (proj₁ (ex1-func e1 e2)) ≡ proj₂ (ex1-func e1 e2)
+  ∀ a1 a2 -> replace' AExpPr 2 ex1-func (proj₁ (ex1-func a1 a2)) ≡ proj₂ (ex1-func a1 a2)
 replace'-ex1-func-is-sound-using-rewrite _ _ = refl
 
 replace'-0+-func-is-sound-using-rewrite :
-  ∀ e -> replace' AExpPr 1 0+-func (proj₁ (0+-func e)) ≡ proj₂ (0+-func e)
+  ∀ a2 -> replace' AExpPr 1 0+-func (proj₁ (0+-func a2)) ≡ proj₂ (0+-func a2)
 replace'-0+-func-is-sound-using-rewrite _ = refl
+
+replace'-fancy-func-is-sound-using-rewrite :
+  ∀ a1 a2 b1 b2 ->
+    replace' AExpPr 4 fancy-func (proj₁ (fancy-func a1 a2 b1 b2)) ≡ proj₂ (fancy-func a1 a2 b1 b2)
+replace'-fancy-func-is-sound-using-rewrite _ _ _ _ = refl
