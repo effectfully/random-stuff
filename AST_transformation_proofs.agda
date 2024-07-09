@@ -1,5 +1,7 @@
 -- This is related to http://stackoverflow.com/questions/24475546/non-tedious-ast-transformation-proofs-in-agda/
 
+{-# OPTIONS --rewriting #-}
+
 module AST_transformation_proofs where
 
 open import Level
@@ -313,5 +315,38 @@ opt-fancy-sound : ∀ e → aeval (opt-fancy e) ≡ aeval e
 opt-fancy-sound = sound AExpPr 4 fancy-func
   (λ a1 a2 b1 b2 -> fancy-lem (aeval a1) (aeval a2) (aeval b1) (aeval b2))
 
--- This whole approach isn't sound unless it's proven that `replace pr n f (fst (f e1 e2 ... en))`
--- is equal to `snd (f e1 e2 ... en)` or something of this sort, which is quite hard I assume.
+-- This whole approach isn't sound unless it's proven that `replace' pr n f (fst (f e1 e2 ... en))`
+-- is equal to `snd (f e1 e2 ... en)` or something of this sort, which is quite hard in general, I
+-- assume. But somehow it's not hard for some specific cases, see the ridiculous proofs below.
+
+postulate
+  -- I'm just too lazy to prove it.
+  isEqualSelf : ∀ e -> (e ≟AExp e) ≡ yes' refl
+
+replace'-ex1-func-is-sound :
+  ∀ e1 e2 -> replace' AExpPr 2 ex1-func (proj₁ (ex1-func e1 e2)) ≡ proj₂ (ex1-func e1 e2)
+replace'-ex1-func-is-sound e1 e2 with e1 ≟AExp e1 | isEqualSelf e1
+... | yes' refl | refl with e2 ≟AExp e2 | isEqualSelf e2
+... | yes' refl | refl with e1 ≟AExp e1 | isEqualSelf e1
+... | yes' refl | refl with e2 ≟AExp e2 | isEqualSelf e2
+... | yes' refl | refl with e1 ≟AExp e1 | isEqualSelf e1
+... | yes' refl | refl with e2 ≟AExp e2 | isEqualSelf e2
+... | yes' refl | refl = refl
+
+replace'-0+-func-is-sound :
+  ∀ e -> replace' AExpPr 1 0+-func (proj₁ (0+-func e)) ≡ proj₂ (0+-func e)
+replace'-0+-func-is-sound e with e ≟AExp e | isEqualSelf e
+... | yes' refl | refl = refl
+
+-- Or using a REWRITE rule:
+
+{-# BUILTIN REWRITE _≡_ #-}
+{-# REWRITE isEqualSelf #-}
+
+replace'-ex1-func-is-sound-using-rewrite :
+  ∀ e1 e2 -> replace' AExpPr 2 ex1-func (proj₁ (ex1-func e1 e2)) ≡ proj₂ (ex1-func e1 e2)
+replace'-ex1-func-is-sound-using-rewrite _ _ = refl
+
+replace'-0+-func-is-sound-using-rewrite :
+  ∀ e -> replace' AExpPr 1 0+-func (proj₁ (0+-func e)) ≡ proj₂ (0+-func e)
+replace'-0+-func-is-sound-using-rewrite _ = refl
